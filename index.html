@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>เลือกเที่ยวบิน กรุงเทพฯ – เชียงราย (19–21 ม.ค. 2570)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    :root {
+      --bg-page: #f5f7fb;
+      --surface: #ffffff;
+      --ink-main: #0f172a;
+      --ink-muted: #64748b;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Sarabun", "Noto Sans Thai", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: var(--bg-page);
+      color: var(--ink-main);
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .app-container {
+      max-width: 1120px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .flight-card {
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+                  border-color 0.18s ease,
+                  background-color 0.18s ease;
+    }
+
+    .flight-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px -14px rgba(15, 23, 42, 0.18);
+    }
+
+    .flight-card[data-selected="true"].card-dmk {
+      border-color: #f59e0b;
+      background-color: #fffbeb;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
+    }
+
+    .flight-card[data-selected="true"].card-bkk {
+      border-color: #3b82f6;
+      background-color: #eff6ff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+    }
+
+    .floating-dock {
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
+    }
+
+    .floating-dock.dock-hidden {
+      transform: translateY(120%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .toast-enter {
+      animation: toastSlideIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes toastSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-anchor {
+      scroll-margin-top: 88px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#f5f7fb] text-slate-800 pb-28">
+  <!-- Clean Frosted Top Navigation -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
+    <div class="app-container px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0" aria-hidden="true">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-sm sm:text-base font-bold text-slate-900 truncate">
+            กรุงเทพฯ – เชียงราย (19–21 ม.ค. 2570)
+          </h1>
+          <p class="text-xs text-slate-500 truncate hidden sm:block">
+            เลือกเที่ยวบินแยกสนามบิน และลงทะเบียนเดินทางลง Google Sheets
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Step Navigation (Desktop) -->
+      <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl text-xs font-medium" aria-label="ขั้นตอนการใช้งาน">
+        <a href="#outboundSection" id="navStep1" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/80 transition">
+          1. ขาไป
+        </a>
+        <a href="#returnSection" id="navStep2" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/80 transition">
+          2. ขากลับ
+        </a>
+        <a href="#registrationSection" id="navStep3" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/80 transition">
+          3. กรอกข้อมูล
+        </a>
+        <a href="#recordsSection" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/80 transition flex items-center gap-1.5">
+          <span>รายชื่อ</span>
+          <span id="headerRegCount" class="px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-bold tabular-nums">0</span>
+        </a>
+      </nav>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          id="btnOpenSheetSettings"
+          type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 transition cursor-pointer"
+        >
+          <span id="sheetStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>Google Sheets</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-container px-4 sm:px-6 pt-6 sm:pt-8 space-y-10">
+    <!-- Hero / Filter Strip -->
+    <section class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="space-y-1">
+        <h2 class="text-lg sm:text-xl font-bold text-slate-900">
+          เปรียบเทียบเที่ยวบินตรง แยกตามสนามบิน
+        </h2>
+        <p class="text-sm text-slate-500">
+          แตะเลือกเที่ยวบินขาไปและขากลับที่ต้องการ แล้วเลื่อนลงไปเลือกชื่อผู้เดินทางเพื่อบันทึกได้ทันที
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2" role="group" aria-label="ตัวกรองสนามบิน">
+        <button
+          type="button"
+          data-airport-filter="ALL"
+          class="airport-filter-btn px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition cursor-pointer"
+        >
+          ทั้ง 2 สนามบิน
+        </button>
+        <button
+          type="button"
+          data-airport-filter="DMK"
+          class="airport-filter-btn px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition cursor-pointer"
+        >
+          ดอนเมือง (DMK)
+        </button>
+        <button
+          type="button"
+          data-airport-filter="BKK"
+          class="airport-filter-btn px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition cursor-pointer"
+        >
+          สุวรรณภูมิ (BKK)
+        </button>
+        <button
+          id="btnClearSelection"
+          type="button"
+          class="px-3.5 py-2 rounded-full text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+        >
+          ล้างตัวเลือก
+        </button>
+      </div>
+    </section>
+
+    <!-- STEP 1: OUTBOUND FLIGHTS -->
+    <section id="outboundSection" class="section-anchor space-y-4">
+      <div class="flex flex-wrap items-end justify-between gap-2 px-1">
+        <div>
+          <div class="text-xs font-semibold text-indigo-600 mb-0.5">ขั้นตอนที่ 1 · เที่ยวบินขาไป</div>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
+            กรุงเทพฯ → เชียงราย (CEI)
+          </h2>
+          <p class="text-sm text-slate-500">
+            วันอังคารที่ 19 มกราคม 2570 · เที่ยวบินแรกของทุกสายการบิน
+          </p>
+        </div>
+        <div id="outboundSelectedBadge" class="text-xs sm:text-sm font-medium text-slate-400">
+          ยังไม่ได้เลือกเที่ยวบินขาไป
+        </div>
+      </div>
+
+      <div id="outboundGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- DMK Outbound -->
+        <div data-airport-col="DMK" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div class="px-5 py-4 bg-gradient-to-r from-amber-50/90 to-white border-b border-amber-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="px-2.5 py-1 rounded-lg bg-amber-500 text-white text-xs font-bold tracking-wide">DMK</span>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">ท่าอากาศยานดอนเมือง</h3>
+                <p class="text-xs text-slate-500">3 สายการบิน · 06:50 – 08:35 น.</p>
+              </div>
+            </div>
+          </div>
+          <div id="outboundDmkList" class="p-4 space-y-3"></div>
+        </div>
+
+        <!-- BKK Outbound -->
+        <div data-airport-col="BKK" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div class="px-5 py-4 bg-gradient-to-r from-blue-50/90 to-white border-b border-blue-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide">BKK</span>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">ท่าอากาศยานสุวรรณภูมิ</h3>
+                <p class="text-xs text-slate-500">2 สายการบิน · 06:30 – 08:10 น.</p>
+              </div>
+            </div>
+          </div>
+          <div id="outboundBkkList" class="p-4 space-y-3"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: RETURN FLIGHTS -->
+    <section id="returnSection" class="section-anchor space-y-4">
+      <div class="flex flex-wrap items-end justify-between gap-2 px-1">
+        <div>
+          <div class="text-xs font-semibold text-indigo-600 mb-0.5">ขั้นตอนที่ 2 · เที่ยวบินขากลับ</div>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
+            เชียงราย (CEI) → กรุงเทพฯ
+          </h2>
+          <p class="text-sm text-slate-500">
+            วันพฤหัสบดีที่ 21 มกราคม 2570 · ช่วงเวลาออกเดินทาง 14:00 – 17:00 น.
+          </p>
+        </div>
+        <div id="returnSelectedBadge" class="text-xs sm:text-sm font-medium text-slate-400">
+          ยังไม่ได้เลือกเที่ยวบินขากลับ
+        </div>
+      </div>
+
+      <div id="returnGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- DMK Return -->
+        <div data-airport-col="DMK" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div class="px-5 py-4 bg-gradient-to-r from-amber-50/90 to-white border-b border-amber-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="px-2.5 py-1 rounded-lg bg-amber-500 text-white text-xs font-bold tracking-wide">DMK</span>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">ลงท่าอากาศยานดอนเมือง</h3>
+                <p class="text-xs text-slate-500">3 เที่ยวบิน · 14:00 – 16:10 น.</p>
+              </div>
+            </div>
+          </div>
+          <div id="returnDmkList" class="p-4 space-y-3"></div>
+          <div class="px-4 pb-4">
+            <p class="text-xs text-slate-500 bg-slate-50 rounded-xl px-3.5 py-2.5">
+              หมายเหตุ: Nok Air ไม่มีเที่ยวบินตรงขากลับในช่วงเวลา 14:00 – 17:00 น.
+            </p>
+          </div>
+        </div>
+
+        <!-- BKK Return -->
+        <div data-airport-col="BKK" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div class="px-5 py-4 bg-gradient-to-r from-blue-50/90 to-white border-b border-blue-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide">BKK</span>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">ลงท่าอากาศยานสุวรรณภูมิ</h3>
+                <p class="text-xs text-slate-500">2 เที่ยวบิน · 14:25 – 15:20 น.</p>
+              </div>
+            </div>
+          </div>
+          <div id="returnBkkList" class="p-4 space-y-3"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: TRAVELER REGISTRATION FORM (THAI AIRWAYS THEME) -->
+    <section id="registrationSection" class="section-anchor bg-white rounded-3xl border border-[#DFD2F2] shadow-sm overflow-hidden">
+      <div class="px-6 py-5 bg-gradient-to-r from-[#3A1966] via-[#532989] to-[#6E2D91] text-white border-b-[3px] border-[#D4AF37] flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="text-xs font-semibold text-[#F7DC7B] tracking-wide">ขั้นตอนที่ 3 · ลงทะเบียนผู้เดินทาง</div>
+          <h2 class="text-xl font-bold text-white mt-0.5">กรอกข้อมูลการเดินทางเพื่อจัดเก็บลง Google Sheets</h2>
+        </div>
+        <div id="formSyncStatus" class="text-xs font-medium px-3.5 py-1.5 rounded-full bg-white/15 text-[#FBE8A6] border border-[#F7DC7B]/40 backdrop-blur-xs">
+          โหมดบันทึกในเครื่อง (ยังไม่ได้เชื่อมต่อ Apps Script)
+        </div>
+      </div>
+
+      <form id="travelForm" class="p-6 space-y-7" novalidate>
+        <!-- Selected Flights Recap -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div id="summaryOutboundBox" class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 transition">
+            <div class="text-xs font-semibold text-slate-400">เที่ยวบินขาไป · 19 ม.ค. 2570</div>
+            <div id="summaryOutboundContent" class="mt-1.5 text-sm text-slate-500">
+              ยังไม่ได้เลือก (แตะเลือกเที่ยวบินด้านบน)
+            </div>
+          </div>
+          <div id="summaryReturnBox" class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 transition">
+            <div class="text-xs font-semibold text-slate-400">เที่ยวบินขากลับ · 21 ม.ค. 2570</div>
+            <div id="summaryReturnContent" class="mt-1.5 text-sm text-slate-500">
+              ยังไม่ได้เลือก (แตะเลือกเที่ยวบินด้านบน)
+            </div>
+          </div>
+        </div>
+
+        <!-- Traveler Quick-Select Autofill -->
+        <div class="rounded-2xl bg-[#F7F2FC] border border-[#E3D5F5] p-4 sm:p-5 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label for="selectTravelerPreset" class="text-sm font-bold text-[#3A1966]">
+              เลือกชื่อผู้เดินทางเพื่อกรอกข้อมูลอัตโนมัติ (9 ท่าน)
+            </label>
+            <button
+              id="btnResetTravelerFields"
+              type="button"
+              class="px-3 py-1 rounded-lg text-xs font-semibold bg-white text-[#532989] hover:text-[#3A1966] border border-[#DFD2F2] hover:bg-[#FAF7FE] transition cursor-pointer"
+            >
+              ล้างฟอร์ม
+            </button>
+          </div>
+          <select
+            id="selectTravelerPreset"
+            class="w-full rounded-xl border border-[#D4C0EE] bg-white px-4 py-3 text-sm font-medium text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#532989]/30 focus:border-[#532989] transition"
+          >
+            <option value="">-- เลือกชื่อผู้เดินทาง (หรือกรอกใหม่ด้วยตนเองด้านล่าง) --</option>
+          </select>
+          <p id="autofillHint" class="text-xs text-[#6B3FA0]">
+            เลือกชื่อเพื่อเติมข้อมูลพื้นฐานอัตโนมัติ แล้วกรอกช่องที่เหลือเพิ่มเติมได้ตามต้องการ
+          </p>
+        </div>
+
+        <!-- Passenger Info Fields -->
+        <div class="space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+            <div class="sm:col-span-3 lg:col-span-2">
+              <label for="inputTitle" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                คำนำหน้า (Title) <span class="text-rose-500">*</span>
+              </label>
+              <select
+                id="inputTitle"
+                name="title"
+                required
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              >
+                <option value="">เลือก</option>
+                <option value="MR">MR (นาย)</option>
+                <option value="MRS">MRS (นาง)</option>
+                <option value="MS">MS (นางสาว/นาง)</option>
+                <option value="MISS">MISS (นางสาว)</option>
+                <option value="MSTR">MSTR (ด.ช.)</option>
+              </select>
+            </div>
+
+            <div class="sm:col-span-9 lg:col-span-4">
+              <label for="inputFirstNameEn" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                ชื่อจริง ภาษาอังกฤษ (First Name) <span class="text-rose-500">*</span>
+              </label>
+              <input
+                id="inputFirstNameEn"
+                name="firstNameEn"
+                type="text"
+                required
+                autocomplete="given-name"
+                placeholder="เช่น SOMCHAI"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+
+            <div class="sm:col-span-5 lg:col-span-2">
+              <label for="inputMiddleNameEn" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                ชื่อกลาง (ถ้ามี)
+              </label>
+              <input
+                id="inputMiddleNameEn"
+                name="middleNameEn"
+                type="text"
+                autocomplete="additional-name"
+                placeholder="Middle Name"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+
+            <div class="sm:col-span-7 lg:col-span-4">
+              <label for="inputLastNameEn" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                นามสกุล ภาษาอังกฤษ (Last Name) <span class="text-rose-500">*</span>
+              </label>
+              <input
+                id="inputLastNameEn"
+                name="lastNameEn"
+                type="text"
+                required
+                autocomplete="family-name"
+                placeholder="เช่น JAIDEE"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label for="inputFullNameTh" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                ชื่อ – นามสกุล (ภาษาไทย)
+              </label>
+              <input
+                id="inputFullNameTh"
+                name="fullNameTh"
+                type="text"
+                placeholder="เช่น นายสมชาย ใจดี"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+
+            <div>
+              <label for="inputDob" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                วันเดือนปีเกิด (ค.ศ.) <span class="text-rose-500">*</span>
+              </label>
+              <input
+                id="inputDob"
+                name="dob"
+                type="date"
+                required
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+
+            <div>
+              <label for="inputPhone" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                เบอร์โทรศัพท์มือถือ <span class="text-rose-500">*</span>
+              </label>
+              <input
+                id="inputPhone"
+                name="phone"
+                type="tel"
+                required
+                placeholder="เช่น 081-234-5678"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+
+            <div>
+              <label for="inputEmail" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                อีเมล (รับ E-Ticket) <span class="text-rose-500">*</span>
+              </label>
+              <input
+                id="inputEmail"
+                name="email"
+                type="email"
+                required
+                placeholder="เช่น somchai@example.com"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+          </div>
+
+          <!-- Optional Preferences Row -->
+          <div class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label for="inputRopNumber" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                สมาชิก Royal Orchid Plus (ROP)
+              </label>
+              <input
+                id="inputRopNumber"
+                name="ropNumber"
+                type="text"
+                placeholder="ถ้ามี (10 หลัก)"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm uppercase tabular-nums focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+
+            <div>
+              <label for="inputSpecialMeal" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                อาหารพิเศษ (Special Meal)
+              </label>
+              <select
+                id="inputSpecialMeal"
+                name="specialMeal"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              >
+                <option value="ปกติ (Standard)">ปกติ (Standard)</option>
+                <option value="มังสวิรัติ (VGML)">มังสวิรัติ (VGML)</option>
+                <option value="อาหารฮาลาล (MOML)">อาหารฮาลาล (MOML)</option>
+                <option value="อาหารทะเล (SFML)">อาหารทะเล (SFML)</option>
+                <option value="ไม่รับประทานเนื้อวัว (NBML)">ไม่รับประทานเนื้อวัว (NBML)</option>
+                <option value="อาหารไขมันต่ำ (LFML)">อาหารไขมันต่ำ (LFML)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="inputSeatAssist" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                ที่นั่ง / ความช่วยเหลือพิเศษ
+              </label>
+              <select
+                id="inputSeatAssist"
+                name="seatAssist"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              >
+                <option value="ไม่ระบุ">ไม่ระบุ</option>
+                <option value="ริมหน้าต่าง (Window)">ริมหน้าต่าง (Window)</option>
+                <option value="ริมทางเดิน (Aisle)">ริมทางเดิน (Aisle)</option>
+                <option value="ต้องการรถเข็น (WCHR)">ต้องการรถเข็น (WCHR)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="inputNotes" class="block text-xs font-semibold text-slate-600 mb-1.5">
+                หมายเหตุเพิ่มเติม
+              </label>
+              <input
+                id="inputNotes"
+                name="notes"
+                type="text"
+                placeholder="เช่น สัมภาระโหลด / อื่นๆ"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Inline Form Error Message -->
+        <div id="formErrorBox" class="hidden rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-800"></div>
+
+        <!-- Submit Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100">
+          <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            <a
+              href="https://docs.google.com/spreadsheets/d/1ZLrpMTc2Y81lPVuBxq3fUK9kcNNLxvG0ErIq6q69ZHQ/edit"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-emerald-700 hover:text-emerald-800 font-semibold underline underline-offset-2"
+            >
+              เปิด Google Sheet
+            </a>
+            <span class="text-slate-300">|</span>
+            <button
+              id="btnOpenSheetSettingsInline"
+              type="button"
+              class="text-[#532989] hover:text-[#3A1966] font-semibold underline underline-offset-2 cursor-pointer"
+            >
+              ตั้งค่าส่งข้อมูลอัตโนมัติ (Apps Script)
+            </button>
+          </div>
+
+          <button
+            id="btnSubmitTravel"
+            type="submit"
+            class="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-[#4E2A84] to-[#6E2D91] hover:from-[#3A1966] hover:to-[#532989] active:scale-[0.99] text-white font-semibold text-sm shadow-sm border-b-2 border-[#D4AF37] transition cursor-pointer disabled:opacity-60"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span id="btnSubmitLabel">บันทึกข้อมูลผู้โดยสารลง Google Sheets</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- STEP 4: REGISTERED TRAVELERS TABLE -->
+    <section id="recordsSection" class="section-anchor bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">รายชื่อผู้โดยสารที่ลงทะเบียนแล้ว</h2>
+          <p class="text-xs sm:text-sm text-slate-500">
+            สรุปข้อมูลการเดินทางครบ 19 คอลัมน์ พร้อมดาวน์โหลด CSV นำเข้า Google Sheets ได้ทันที
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            id="btnExportCsv"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80 hover:bg-emerald-100 transition cursor-pointer"
+          >
+            ดาวน์โหลด CSV
+          </button>
+          <button
+            id="btnClearAllRecords"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-700 transition cursor-pointer"
+          >
+            ล้างรายการในเครื่อง
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary Counters -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 bg-slate-50/60 border-b border-slate-100 text-center">
+        <div class="p-3.5">
+          <div class="text-xs text-slate-500">ผู้โดยสารทั้งหมด</div>
+          <div id="statTotal" class="text-lg font-bold text-slate-900 tabular-nums mt-0.5">0</div>
+        </div>
+        <div class="p-3.5">
+          <div class="text-xs text-amber-700">ขาไป ดอนเมือง (DMK)</div>
+          <div id="statOutDmk" class="text-lg font-bold text-amber-600 tabular-nums mt-0.5">0</div>
+        </div>
+        <div class="p-3.5">
+          <div class="text-xs text-blue-700">ขาไป สุวรรณภูมิ (BKK)</div>
+          <div id="statOutBkk" class="text-lg font-bold text-blue-600 tabular-nums mt-0.5">0</div>
+        </div>
+        <div class="p-3.5">
+          <div class="text-xs text-amber-700">ขากลับ ดอนเมือง (DMK)</div>
+          <div id="statRetDmk" class="text-lg font-bold text-amber-600 tabular-nums mt-0.5">0</div>
+        </div>
+        <div class="p-3.5 col-span-2 sm:col-span-1">
+          <div class="text-xs text-blue-700">ขากลับ สุวรรณภูมิ (BKK)</div>
+          <div id="statRetBkk" class="text-lg font-bold text-blue-600 tabular-nums mt-0.5">0</div>
+        </div>
+      </div>
+
+      <!-- Confirm Clear Inline Banner -->
+      <div id="confirmClearBanner" class="hidden bg-rose-50 border-b border-rose-200 px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+        <span class="text-sm text-rose-900 font-medium">ยืนยันการล้างรายชื่อที่เก็บไว้ในเบราว์เซอร์นี้? (ข้อมูลใน Google Sheets จะไม่ถูกลบ)</span>
+        <div class="flex items-center gap-2">
+          <button id="btnConfirmClearYes" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 cursor-pointer">ยืนยัน</button>
+          <button id="btnConfirmClearNo" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer">ยกเลิก</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-slate-50/70 text-slate-500 text-xs border-b border-slate-100">
+              <th class="py-3.5 px-4 font-semibold">#</th>
+              <th class="py-3.5 px-4 font-semibold">ผู้โดยสาร</th>
+              <th class="py-3.5 px-4 font-semibold">วันเกิด / ROP</th>
+              <th class="py-3.5 px-4 font-semibold">ขาไป (19 ม.ค. 70)</th>
+              <th class="py-3.5 px-4 font-semibold">ขากลับ (21 ม.ค. 70)</th>
+              <th class="py-3.5 px-4 font-semibold">บริการพิเศษ / หมายเหตุ</th>
+              <th class="py-3.5 px-4 font-semibold">สถานะ</th>
+              <th class="py-3.5 px-4 font-semibold text-right">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="recordsTableBody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="text-center text-xs text-slate-400 pt-2">
+      ข้อมูลตารางเที่ยวบินตรงจาก Google Flights ณ วันที่ 25 พฤศจิกายน 2569
+    </footer>
+  </main>
+
+  <!-- FLOATING SELECTION DOCK (Smooth Flow Guide) -->
+  <div id="floatingDock" class="floating-dock dock-hidden fixed bottom-4 inset-x-0 z-40 px-4 pointer-events-none">
+    <div class="app-container flex justify-center">
+      <div class="pointer-events-auto bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-xl border border-slate-700/80 px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3 w-full max-w-3xl">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm min-w-0">
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-400">ขาไป:</span>
+            <span id="dockOutboundText" class="font-semibold text-white">ยังไม่เลือก</span>
+          </div>
+          <span class="text-slate-600 hidden sm:inline">•</span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-400">ขากลับ:</span>
+            <span id="dockReturnText" class="font-semibold text-white">ยังไม่เลือก</span>
+          </div>
+        </div>
+        <a
+          id="dockActionBtn"
+          href="#registrationSection"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs sm:text-sm font-semibold transition shrink-0"
+        >
+          <span id="dockActionLabel">ไปกรอกข้อมูล →</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOOGLE SHEETS CONNECTION MODAL -->
+  <div id="sheetModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4" role="dialog" aria-modal="true" aria-labelledby="sheetModalTitle">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div>
+          <h3 id="sheetModalTitle" class="text-base sm:text-lg font-bold">เชื่อมต่อจัดเก็บข้อมูลลง Google Sheets</h3>
+          <p class="text-xs text-slate-300">เชื่อมต่อตรงเข้าแท็บ "ข้อมูลการเดินทาง" (19 คอลัมน์)</p>
+        </div>
+        <button id="btnCloseSheetModal" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center cursor-pointer" aria-label="ปิดหน้าต่าง">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-5 text-sm">
+        <div class="rounded-2xl bg-emerald-50 border border-emerald-200/80 p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="text-xs font-semibold text-emerald-700">ไฟล์ Google Sheet ที่อัปเดตคอลัมน์แล้ว</div>
+            <div class="font-bold text-emerald-950">บันทึกข้อมูลการเดินทาง กรุงเทพฯ - เชียงราย (19-21 ม.ค. 2570)</div>
+          </div>
+          <a
+            href="https://docs.google.com/spreadsheets/d/1ZLrpMTc2Y81lPVuBxq3fUK9kcNNLxvG0ErIq6q69ZHQ/edit"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition"
+          >
+            เปิด Google Sheet
+          </a>
+        </div>
+
+        <div class="space-y-2">
+          <label for="inputGasUrl" class="block font-semibold text-slate-800">
+            Web App URL จาก Google Apps Script
+          </label>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input
+              id="inputGasUrl"
+              type="url"
+              placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+              class="flex-1 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            />
+            <button
+              id="btnSaveGasUrl"
+              type="button"
+              class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition cursor-pointer shrink-0"
+            >
+              บันทึกลิงก์
+            </button>
+            <button
+              id="btnClearGasUrl"
+              type="button"
+              class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm transition cursor-pointer shrink-0"
+            >
+              ล้าง
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="font-semibold text-slate-800">วิธีเปิดใช้งานรับข้อมูลใน 1 นาที</div>
+          <ol class="list-decimal list-inside space-y-1.5 text-xs sm:text-sm text-slate-600">
+            <li>เปิดไฟล์ Google Sheet ด้านบน แล้วไปที่เมนู <strong>ส่วนขยาย (Extensions) → Apps Script</strong></li>
+            <li>วางโค้ดด้านล่างแทนที่โค้ดเดิมทั้งหมด แล้วกดบันทึก</li>
+            <li>กด <strong>ทำให้ใช้งานได้ (Deploy) → รายการใหม่ (New deployment)</strong> เลือกประเภท <strong>เว็บแอป (Web app)</strong> ตั้งผู้มีสิทธิ์เป็น <strong>ทุกคน (Anyone)</strong></li>
+            <li>คัดลอก <strong>Web app URL</strong> มาวางในช่องด้านบนแล้วกด <strong>บันทึกลิงก์</strong></li>
+          </ol>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">โค้ด Google Apps Script (Code.gs · 19 คอลัมน์)</span>
+            <button
+              id="btnCopyGasCode"
+              type="button"
+              class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold transition cursor-pointer"
+            >
+              คัดลอกโค้ด
+            </button>
+          </div>
+          <pre id="gasCodeBlock" class="bg-slate-950 text-emerald-300 rounded-2xl p-4 text-xs overflow-x-auto leading-relaxed">function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('ข้อมูลการเดินทาง');
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    data.timestamp || new Date().toLocaleString('th-TH'),
+    data.title || '',
+    data.firstNameEn || '',
+    data.middleNameEn || '',
+    data.lastNameEn || '',
+    data.fullNameTh || '',
+    data.dob || '',
+    "'" + (data.phone || ''),
+    data.email || '',
+    "'" + (data.ropNumber || ''),
+    data.specialMeal || '',
+    data.seatAssist || '',
+    data.outboundAirport || '',
+    data.outboundAirline || '',
+    data.outboundTime || '',
+    data.returnAirport || '',
+    data.returnAirline || '',
+    data.returnTime || '',
+    data.notes || ''
+  ]);
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'success' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed top-20 right-5 z-50 space-y-2 max-w-sm w-[calc(100%-2.5rem)] pointer-events-none"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================
+      // 1. CONFIGURATION
+      // =========================================================
+      const DEFAULT_GAS_WEB_APP_URL = '';
+      const STORAGE_KEY_RECORDS = 'bkk_cei_travel_records_v3';
+      const STORAGE_KEY_GAS_URL = 'bkk_cei_gas_url_2570_v1';
+
+      // =========================================================
+      // 2. VERIFIED FLIGHT DATA (Google Flights, 25 Nov 2026 - NO PRICES)
+      // =========================================================
+      const OUTBOUND_FLIGHTS = [
+        {
+          id: 'out-dmk-fd',
+          airportCode: 'DMK',
+          airportName: 'ท่าอากาศยานดอนเมือง (DMK)',
+          airline: 'Thai AirAsia',
+          badgeClass: 'bg-rose-50 text-rose-700 border-rose-200/80',
+          depart: '06:50',
+          arrive: '08:20',
+          duration: '1 ชม. 30 นาที',
+          tag: 'ออกเช้าสุดจากดอนเมือง'
+        },
+        {
+          id: 'out-dmk-sl',
+          airportCode: 'DMK',
+          airportName: 'ท่าอากาศยานดอนเมือง (DMK)',
+          airline: 'Thai Lion Air',
+          badgeClass: 'bg-red-50 text-red-700 border-red-200/80',
+          depart: '08:05',
+          arrive: '09:30',
+          duration: '1 ชม. 25 นาที',
+          tag: 'เที่ยวบินแรกของสายการบิน'
+        },
+        {
+          id: 'out-dmk-dd',
+          airportCode: 'DMK',
+          airportName: 'ท่าอากาศยานดอนเมือง (DMK)',
+          airline: 'Nok Air',
+          badgeClass: 'bg-amber-50 text-amber-800 border-amber-200/80',
+          depart: '08:35',
+          arrive: '10:00',
+          duration: '1 ชม. 25 นาที',
+          tag: 'เที่ยวบินแรกของสายการบิน'
+        },
+        {
+          id: 'out-bkk-vz',
+          airportCode: 'BKK',
+          airportName: 'ท่าอากาศยานสุวรรณภูมิ (BKK)',
+          airline: 'Thai Vietjet Air',
+          badgeClass: 'bg-orange-50 text-orange-700 border-orange-200/80',
+          depart: '06:30',
+          arrive: '07:55',
+          duration: '1 ชม. 25 นาที',
+          tag: 'ถึงเชียงรายเช้าที่สุด'
+        },
+        {
+          id: 'out-bkk-tg',
+          airportCode: 'BKK',
+          airportName: 'ท่าอากาศยานสุวรรณภูมิ (BKK)',
+          airline: 'การบินไทย (THAI)',
+          badgeClass: 'bg-purple-50 text-purple-700 border-purple-200/80',
+          depart: '08:10',
+          arrive: '09:40',
+          duration: '1 ชม. 30 นาที',
+          tag: 'Full Service'
+        }
+      ];
+
+      const RETURN_FLIGHTS = [
+        {
+          id: 'ret-dmk-fd1',
+          airportCode: 'DMK',
+          airportName: 'ท่าอากาศยานดอนเมือง (DMK)',
+          airline: 'Thai AirAsia',
+          badgeClass: 'bg-rose-50 text-rose-700 border-rose-200/80',
+          depart: '14:00',
+          arrive: '15:20',
+          duration: '1 ชม. 20 นาที',
+          tag: 'รอบบ่ายต้น'
+        },
+        {
+          id: 'ret-dmk-sl',
+          airportCode: 'DMK',
+          airportName: 'ท่าอากาศยานดอนเมือง (DMK)',
+          airline: 'Thai Lion Air',
+          badgeClass: 'bg-red-50 text-red-700 border-red-200/80',
+          depart: '14:40',
+          arrive: '16:05',
+          duration: '1 ชม. 25 นาที',
+          tag: 'รอบบ่ายกลาง'
+        },
+        {
+          id: 'ret-dmk-fd2',
+          airportCode: 'DMK',
+          airportName: 'ท่าอากาศยานดอนเมือง (DMK)',
+          airline: 'Thai AirAsia',
+          badgeClass: 'bg-rose-50 text-rose-700 border-rose-200/80',
+          depart: '16:10',
+          arrive: '17:30',
+          duration: '1 ชม. 20 นาที',
+          tag: 'รอบบ่ายเย็น'
+        },
+        {
+          id: 'ret-bkk-tg',
+          airportCode: 'BKK',
+          airportName: 'ท่าอากาศยานสุวรรณภูมิ (BKK)',
+          airline: 'การบินไทย (THAI)',
+          badgeClass: 'bg-purple-50 text-purple-700 border-purple-200/80',
+          depart: '14:25',
+          arrive: '15:55',
+          duration: '1 ชม. 30 นาที',
+          tag: 'Full Service'
+        },
+        {
+          id: 'ret-bkk-vz',
+          airportCode: 'BKK',
+          airportName: 'ท่าอากาศยานสุวรรณภูมิ (BKK)',
+          airline: 'Thai Vietjet Air',
+          badgeClass: 'bg-orange-50 text-orange-700 border-orange-200/80',
+          depart: '15:20',
+          arrive: '16:45',
+          duration: '1 ชม. 25 นาที',
+          tag: 'รอบบ่ายกลาง'
+        }
+      ];
+
+      // =========================================================
+      // 3. TRAVELER PRESETS (จากไฟล์ ข้อมูลผู้เดินทาง.xlsx)
+      // =========================================================
+      const TRAVELER_PRESETS = [
+        {
+          id: 'trv-1',
+          fullNameTh: 'นายสิทธิ โสภณภิรมย์',
+          title: 'MR',
+          firstNameEn: 'SITTI',
+          lastNameEn: 'SOPHONPIROM',
+          dob: '1987-02-05',
+          email: 'sit-sophon@hotmail.com',
+          phone: '087-9176217'
+        },
+        {
+          id: 'trv-2',
+          fullNameTh: 'น.ส.สุรีพร ศิริภักดี',
+          title: 'MISS',
+          firstNameEn: 'SUREEPORN',
+          lastNameEn: 'SIRIPHAKDEE',
+          dob: '1976-10-03',
+          email: 'sureeporn.s@ago.mail.go.th',
+          phone: '092-2825656'
+        },
+        {
+          id: 'trv-3',
+          fullNameTh: 'นายจิรายุส ปิยะกุล',
+          title: 'MR',
+          firstNameEn: 'JIRAYUT',
+          lastNameEn: 'PIYAKUN',
+          dob: '1987-06-18',
+          email: 'jirayut.p@ago.mail.go.th',
+          phone: '080-3529987'
+        },
+        {
+          id: 'trv-4',
+          fullNameTh: 'นายทัตตพันธ์ ชูศรี',
+          title: 'MR',
+          firstNameEn: 'TATTAPAN',
+          lastNameEn: 'CHOOSRI',
+          dob: '1990-02-05',
+          email: 'tattapan.c@gmail.com',
+          phone: '085-0074757'
+        },
+        {
+          id: 'trv-5',
+          fullNameTh: 'นายณัฐดนัย จงห่วงกลาง',
+          title: 'MR',
+          firstNameEn: 'NUTDANAI',
+          lastNameEn: 'CHANGHUANGKLANG',
+          dob: '1996-11-18',
+          email: 'nutdanai1811@gmail.com',
+          phone: '098-9519622'
+        },
+        {
+          id: 'trv-6',
+          fullNameTh: 'นายณรงค์ศักดิ์ โยตมาน',
+          title: 'MR',
+          firstNameEn: 'NARONGSAK',
+          lastNameEn: 'YOTAMAN',
+          dob: '1995-10-04',
+          email: 'narongsak_aoe@hotmail.com',
+          phone: '082-7581817'
+        },
+        {
+          id: 'trv-7',
+          fullNameTh: 'น.ส.ปวีณา เอี่ยมศิริกุลมิตร',
+          title: 'MISS',
+          firstNameEn: 'PAWEENA',
+          lastNameEn: 'IAMSIRIKULAMITH',
+          dob: '1982-03-29',
+          email: 'paweena.iam@ago.mail.go.th',
+          phone: '081-6141176'
+        },
+        {
+          id: 'trv-8',
+          fullNameTh: 'นายเชิดเกียรติ อินทเสม',
+          title: 'MR',
+          firstNameEn: 'CHERDKIAT',
+          lastNameEn: 'INTHASEM',
+          dob: '1982-08-29',
+          email: 'cherdkiat.i@ago.mail.go.th',
+          phone: '085-5164287'
+        },
+        {
+          id: 'trv-9',
+          fullNameTh: 'นายรวินท์ ชัยภิวัตรภักดี',
+          title: 'MR',
+          firstNameEn: 'RAWIN',
+          lastNameEn: 'CHAIPIWATPAKDEE',
+          dob: '1982-06-07',
+          email: 'rawin.dwk@hotmail.com',
+          phone: '089-9229446'
+        }
+      ];
+
+      // =========================================================
+      // 4. STATE MANAGEMENT
+      // =========================================================
+      const state = {
+        airportFilter: 'ALL',
+        selectedOutboundId: null,
+        selectedReturnId: null,
+        gasUrl: loadStoredGasUrl(),
+        records: loadStoredRecords()
+      };
+
+      function loadStoredGasUrl() {
+        try {
+          return localStorage.getItem(STORAGE_KEY_GAS_URL) || DEFAULT_GAS_WEB_APP_URL;
+        } catch (err) {
+          return DEFAULT_GAS_WEB_APP_URL;
+        }
+      }
+
+      function saveStoredGasUrl(url) {
+        try {
+          if (url) {
+            localStorage.setItem(STORAGE_KEY_GAS_URL, url);
+          } else {
+            localStorage.removeItem(STORAGE_KEY_GAS_URL);
+          }
+        } catch (err) {
+          // Ignore storage error
+        }
+      }
+
+      function loadStoredRecords() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_RECORDS);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+          return [];
+        }
+      }
+
+      function saveStoredRecords() {
+        try {
+          localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(state.records));
+        } catch (err) {
+          // Ignore storage error
+        }
+      }
+
+      // =========================================================
+      // 5. DOM REFERENCES
+      // =========================================================
+      const dom = {
+        outboundDmkList: document.getElementById('outboundDmkList'),
+        outboundBkkList: document.getElementById('outboundBkkList'),
+        returnDmkList: document.getElementById('returnDmkList'),
+        returnBkkList: document.getElementById('returnBkkList'),
+        outboundGrid: document.getElementById('outboundGrid'),
+        returnGrid: document.getElementById('returnGrid'),
+        outboundSelectedBadge: document.getElementById('outboundSelectedBadge'),
+        returnSelectedBadge: document.getElementById('returnSelectedBadge'),
+        summaryOutboundBox: document.getElementById('summaryOutboundBox'),
+        summaryOutboundContent: document.getElementById('summaryOutboundContent'),
+        summaryReturnBox: document.getElementById('summaryReturnBox'),
+        summaryReturnContent: document.getElementById('summaryReturnContent'),
+        floatingDock: document.getElementById('floatingDock'),
+        dockOutboundText: document.getElementById('dockOutboundText'),
+        dockReturnText: document.getElementById('dockReturnText'),
+        dockActionBtn: document.getElementById('dockActionBtn'),
+        dockActionLabel: document.getElementById('dockActionLabel'),
+        navStep1: document.getElementById('navStep1'),
+        navStep2: document.getElementById('navStep2'),
+        travelForm: document.getElementById('travelForm'),
+        selectTravelerPreset: document.getElementById('selectTravelerPreset'),
+        btnResetTravelerFields: document.getElementById('btnResetTravelerFields'),
+        autofillHint: document.getElementById('autofillHint'),
+        inputTitle: document.getElementById('inputTitle'),
+        inputFirstNameEn: document.getElementById('inputFirstNameEn'),
+        inputMiddleNameEn: document.getElementById('inputMiddleNameEn'),
+        inputLastNameEn: document.getElementById('inputLastNameEn'),
+        inputFullNameTh: document.getElementById('inputFullNameTh'),
+        inputDob: document.getElementById('inputDob'),
+        inputPhone: document.getElementById('inputPhone'),
+        inputEmail: document.getElementById('inputEmail'),
+        inputRopNumber: document.getElementById('inputRopNumber'),
+        inputSpecialMeal: document.getElementById('inputSpecialMeal'),
+        inputSeatAssist: document.getElementById('inputSeatAssist'),
+        inputNotes: document.getElementById('inputNotes'),
+        formErrorBox: document.getElementById('formErrorBox'),
+        btnSubmitTravel: document.getElementById('btnSubmitTravel'),
+        btnSubmitLabel: document.getElementById('btnSubmitLabel'),
+        btnClearSelection: document.getElementById('btnClearSelection'),
+        headerRegCount: document.getElementById('headerRegCount'),
+        sheetStatusDot: document.getElementById('sheetStatusDot'),
+        formSyncStatus: document.getElementById('formSyncStatus'),
+        recordsTableBody: document.getElementById('recordsTableBody'),
+        statTotal: document.getElementById('statTotal'),
+        statOutDmk: document.getElementById('statOutDmk'),
+        statOutBkk: document.getElementById('statOutBkk'),
+        statRetDmk: document.getElementById('statRetDmk'),
+        statRetBkk: document.getElementById('statRetBkk'),
+        btnExportCsv: document.getElementById('btnExportCsv'),
+        btnClearAllRecords: document.getElementById('btnClearAllRecords'),
+        confirmClearBanner: document.getElementById('confirmClearBanner'),
+        btnConfirmClearYes: document.getElementById('btnConfirmClearYes'),
+        btnConfirmClearNo: document.getElementById('btnConfirmClearNo'),
+        sheetModal: document.getElementById('sheetModal'),
+        btnOpenSheetSettings: document.getElementById('btnOpenSheetSettings'),
+        btnOpenSheetSettingsInline: document.getElementById('btnOpenSheetSettingsInline'),
+        btnCloseSheetModal: document.getElementById('btnCloseSheetModal'),
+        inputGasUrl: document.getElementById('inputGasUrl'),
+        btnSaveGasUrl: document.getElementById('btnSaveGasUrl'),
+        btnClearGasUrl: document.getElementById('btnClearGasUrl'),
+        btnCopyGasCode: document.getElementById('btnCopyGasCode'),
+        gasCodeBlock: document.getElementById('gasCodeBlock'),
+        toastContainer: document.getElementById('toastContainer')
+      };
+
+      // =========================================================
+      // 6. UTILITIES
+      // =========================================================
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function showToast(message, type) {
+        const colors = {
+          success: 'bg-emerald-600 text-white border-emerald-500',
+          info: 'bg-slate-800 text-white border-slate-700',
+          warning: 'bg-amber-600 text-white border-amber-500',
+          error: 'bg-rose-600 text-white border-rose-500'
+        };
+        const el = document.createElement('div');
+        el.className = 'toast-enter pointer-events-auto rounded-2xl border px-4 py-3 text-sm font-medium shadow-lg ' + (colors[type] || colors.info);
+        el.textContent = message;
+        dom.toastContainer.appendChild(el);
+        setTimeout(function () {
+          el.style.opacity = '0';
+          el.style.transition = 'opacity 0.25s ease';
+          setTimeout(function () {
+            if (el.parentNode) el.parentNode.removeChild(el);
+          }, 260);
+        }, 3000);
+      }
+
+      function findFlight(leg, id) {
+        const list = leg === 'outbound' ? OUTBOUND_FLIGHTS : RETURN_FLIGHTS;
+        return list.find(function (f) { return f.id === id; }) || null;
+      }
+
+      function formatDobDisplay(isoDate) {
+        if (!isoDate) return '-';
+        const parts = isoDate.split('-');
+        if (parts.length !== 3) return isoDate;
+        return parts[2] + '/' + parts[1] + '/' + parts[0];
+      }
+
+      // =========================================================
+      // 7. RENDERING
+      // =========================================================
+      function renderTravelerPresetOptions() {
+        const currentVal = dom.selectTravelerPreset.value;
+        const opts = ['<option value="">-- เลือกชื่อผู้เดินทาง (หรือกรอกใหม่ด้วยตนเองด้านล่าง) --</option>'];
+        TRAVELER_PRESETS.forEach(function (p, i) {
+          opts.push(
+            '<option value="' + escapeHtml(p.id) + '">' +
+            (i + 1) + '. ' + escapeHtml(p.fullNameTh) + ' (' + escapeHtml(p.title) + ' ' + escapeHtml(p.firstNameEn) + ' ' + escapeHtml(p.lastNameEn) + ')' +
+            '</option>'
+          );
+        });
+        dom.selectTravelerPreset.innerHTML = opts.join('');
+        dom.selectTravelerPreset.value = currentVal;
+      }
+
+      function createFlightCardHtml(flight, leg, isSelected) {
+        const isDmk = flight.airportCode === 'DMK';
+        const routeFrom = leg === 'outbound' ? flight.airportCode : 'CEI';
+        const routeTo = leg === 'outbound' ? 'CEI' : flight.airportCode;
+        const cardTheme = isDmk ? 'card-dmk' : 'card-bkk';
+        const btnSelectedClass = isDmk
+          ? 'bg-amber-500 text-white border-amber-500'
+          : 'bg-blue-600 text-white border-blue-600';
+        const btnIdleClass = 'bg-slate-100 text-slate-600 border-slate-200/80 hover:bg-slate-200/70';
+
+        return (
+          '<button type="button"' +
+          ' data-leg="' + leg + '"' +
+          ' data-flight-id="' + flight.id + '"' +
+          ' data-selected="' + (isSelected ? 'true' : 'false') + '"' +
+          ' aria-pressed="' + (isSelected ? 'true' : 'false') + '"' +
+          ' class="flight-card ' + cardTheme + ' w-full text-left rounded-2xl border border-slate-200/80 bg-white p-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40">' +
+            '<div class="flex items-center justify-between gap-2">' +
+              '<div class="flex items-center gap-2 flex-wrap">' +
+                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold border ' + flight.badgeClass + '">' +
+                  escapeHtml(flight.airline) +
+                '</span>' +
+                '<span class="text-xs text-slate-400">' + escapeHtml(flight.tag) + '</span>' +
+              '</div>' +
+              '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border shrink-0 transition ' + (isSelected ? btnSelectedClass : btnIdleClass) + '">' +
+                (isSelected ? '✓ เลือกแล้ว' : 'เลือก') +
+              '</span>' +
+            '</div>' +
+            '<div class="mt-4 flex items-center justify-between gap-3">' +
+              '<div>' +
+                '<div class="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums">' + flight.depart + ' <span class="text-xs font-medium text-slate-400">น.</span></div>' +
+                '<div class="text-xs font-semibold text-slate-400 mt-0.5">' + routeFrom + '</div>' +
+              '</div>' +
+              '<div class="flex-1 flex flex-col items-center px-2">' +
+                '<div class="text-xs text-slate-400 mb-1">' + escapeHtml(flight.duration) + '</div>' +
+                '<div class="w-full flex items-center gap-1.5">' +
+                  '<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>' +
+                  '<span class="flex-1 h-px bg-slate-200"></span>' +
+                  '<span class="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">บินตรง</span>' +
+                  '<span class="flex-1 h-px bg-slate-200"></span>' +
+                  '<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="text-right">' +
+                '<div class="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums">' + flight.arrive + ' <span class="text-xs font-medium text-slate-400">น.</span></div>' +
+                '<div class="text-xs font-semibold text-slate-400 mt-0.5">' + routeTo + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</button>'
+        );
+      }
+
+      function renderFlightLists() {
+        dom.outboundDmkList.innerHTML = OUTBOUND_FLIGHTS
+          .filter(function (f) { return f.airportCode === 'DMK'; })
+          .map(function (f) { return createFlightCardHtml(f, 'outbound', state.selectedOutboundId === f.id); })
+          .join('');
+
+        dom.outboundBkkList.innerHTML = OUTBOUND_FLIGHTS
+          .filter(function (f) { return f.airportCode === 'BKK'; })
+          .map(function (f) { return createFlightCardHtml(f, 'outbound', state.selectedOutboundId === f.id); })
+          .join('');
+
+        dom.returnDmkList.innerHTML = RETURN_FLIGHTS
+          .filter(function (f) { return f.airportCode === 'DMK'; })
+          .map(function (f) { return createFlightCardHtml(f, 'return', state.selectedReturnId === f.id); })
+          .join('');
+
+        dom.returnBkkList.innerHTML = RETURN_FLIGHTS
+          .filter(function (f) { return f.airportCode === 'BKK'; })
+          .map(function (f) { return createFlightCardHtml(f, 'return', state.selectedReturnId === f.id); })
+          .join('');
+      }
+
+      function renderAirportFilter() {
+        document.querySelectorAll('.airport-filter-btn').forEach(function (btn) {
+          const val = btn.getAttribute('data-airport-filter');
+          const active = val === state.airportFilter;
+          btn.className = 'airport-filter-btn px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition cursor-pointer ';
+          if (active) {
+            if (val === 'DMK') {
+              btn.className += 'bg-amber-500 text-white border-amber-500 shadow-xs';
+            } else if (val === 'BKK') {
+              btn.className += 'bg-blue-600 text-white border-blue-600 shadow-xs';
+            } else {
+              btn.className += 'bg-slate-900 text-white border-slate-900 shadow-xs';
+            }
+          } else {
+            if (val === 'DMK') {
+              btn.className += 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50';
+            } else if (val === 'BKK') {
+              btn.className += 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50';
+            } else {
+              btn.className += 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+            }
+          }
+        });
+
+        document.querySelectorAll('[data-airport-col]').forEach(function (col) {
+          const code = col.getAttribute('data-airport-col');
+          const show = state.airportFilter === 'ALL' || state.airportFilter === code;
+          col.classList.toggle('hidden', !show);
+        });
+
+        const gridClass = state.airportFilter === 'ALL'
+          ? 'grid grid-cols-1 lg:grid-cols-2 gap-6'
+          : 'grid grid-cols-1 gap-6';
+        dom.outboundGrid.className = gridClass;
+        dom.returnGrid.className = gridClass;
+      }
+
+      function renderSelectionSummary() {
+        const outFlight = findFlight('outbound', state.selectedOutboundId);
+        const retFlight = findFlight('return', state.selectedReturnId);
+
+        if (outFlight) {
+          const isDmk = outFlight.airportCode === 'DMK';
+          dom.outboundSelectedBadge.innerHTML =
+            '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ' +
+            (isDmk ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800') + '">' +
+            '✓ ' + escapeHtml(outFlight.airline) + ' (' + outFlight.airportCode + ') ' + outFlight.depart + '–' + outFlight.arrive + ' น.</span>';
+
+          dom.summaryOutboundBox.className = 'rounded-2xl border p-4 transition ' + (isDmk ? 'border-amber-300 bg-amber-50/60' : 'border-blue-300 bg-blue-50/60');
+          dom.summaryOutboundContent.innerHTML =
+            '<div class="font-bold text-slate-900">' + escapeHtml(outFlight.airline) + '</div>' +
+            '<div class="text-xs sm:text-sm text-slate-600 mt-0.5">' + escapeHtml(outFlight.airportName) + ' → เชียงราย (CEI)</div>' +
+            '<div class="text-sm font-semibold text-slate-800 mt-1 tabular-nums">' + outFlight.depart + ' – ' + outFlight.arrive + ' น. (' + escapeHtml(outFlight.duration) + ')</div>';
+          dom.navStep1.textContent = '✓ 1. ขาไป';
+        } else {
+          dom.outboundSelectedBadge.textContent = 'ยังไม่ได้เลือกเที่ยวบินขาไป';
+          dom.summaryOutboundBox.className = 'rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 transition';
+          dom.summaryOutboundContent.innerHTML = '<span class="text-sm text-slate-400">ยังไม่ได้เลือก (แตะเลือกเที่ยวบินด้านบน)</span>';
+          dom.navStep1.textContent = '1. ขาไป';
+        }
+
+        if (retFlight) {
+          const isDmk = retFlight.airportCode === 'DMK';
+          dom.returnSelectedBadge.innerHTML =
+            '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ' +
+            (isDmk ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800') + '">' +
+            '✓ ' + escapeHtml(retFlight.airline) + ' (' + retFlight.airportCode + ') ' + retFlight.depart + '–' + retFlight.arrive + ' น.</span>';
+
+          dom.summaryReturnBox.className = 'rounded-2xl border p-4 transition ' + (isDmk ? 'border-amber-300 bg-amber-50/60' : 'border-blue-300 bg-blue-50/60');
+          dom.summaryReturnContent.innerHTML =
+            '<div class="font-bold text-slate-900">' + escapeHtml(retFlight.airline) + '</div>' +
+            '<div class="text-xs sm:text-sm text-slate-600 mt-0.5">เชียงราย (CEI) → ' + escapeHtml(retFlight.airportName) + '</div>' +
+            '<div class="text-sm font-semibold text-slate-800 mt-1 tabular-nums">' + retFlight.depart + ' – ' + retFlight.arrive + ' น. (' + escapeHtml(retFlight.duration) + ')</div>';
+          dom.navStep2.textContent = '✓ 2. ขากลับ';
+        } else {
+          dom.returnSelectedBadge.textContent = 'ยังไม่ได้เลือกเที่ยวบินขากลับ';
+          dom.summaryReturnBox.className = 'rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 transition';
+          dom.summaryReturnContent.innerHTML = '<span class="text-sm text-slate-400">ยังไม่ได้เลือก (แตะเลือกเที่ยวบินด้านบน)</span>';
+          dom.navStep2.textContent = '2. ขากลับ';
+        }
+
+        // Floating Bottom Dock
+        if (outFlight || retFlight) {
+          dom.floatingDock.classList.remove('dock-hidden');
+          dom.dockOutboundText.textContent = outFlight
+            ? (outFlight.airline + ' (' + outFlight.airportCode + ') ' + outFlight.depart + ' น.')
+            : 'ยังไม่เลือก';
+          dom.dockReturnText.textContent = retFlight
+            ? (retFlight.airline + ' (' + retFlight.airportCode + ') ' + retFlight.depart + ' น.')
+            : 'ยังไม่เลือก';
+
+          if (outFlight && !retFlight) {
+            dom.dockActionBtn.setAttribute('href', '#returnSection');
+            dom.dockActionLabel.textContent = 'เลือกขากลับต่อ →';
+          } else {
+            dom.dockActionBtn.setAttribute('href', '#registrationSection');
+            dom.dockActionLabel.textContent = 'ไปกรอกข้อมูล →';
+          }
+        } else {
+          dom.floatingDock.classList.add('dock-hidden');
+        }
+      }
+
+      function renderSheetStatus() {
+        const connected = Boolean(state.gasUrl && state.gasUrl.indexOf('https://script.google.com/') === 0);
+        if (connected) {
+          dom.sheetStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+          dom.formSyncStatus.className = 'text-xs font-medium px-3.5 py-1.5 rounded-full bg-emerald-400/20 text-emerald-100 border border-emerald-300/40 backdrop-blur-xs';
+          dom.formSyncStatus.textContent = 'เชื่อมต่อ Google Sheets พร้อมส่งอัตโนมัติ';
+        } else {
+          dom.sheetStatusDot.className = 'w-2 h-2 rounded-full bg-amber-400';
+          dom.formSyncStatus.className = 'text-xs font-medium px-3.5 py-1.5 rounded-full bg-white/15 text-[#FBE8A6] border border-[#F7DC7B]/40 backdrop-blur-xs';
+          dom.formSyncStatus.textContent = 'โหมดบันทึกในเครื่อง (ยังไม่ได้เชื่อมต่อ Apps Script)';
+        }
+      }
+
+      function renderRecordsTable() {
+        const records = state.records;
+        dom.headerRegCount.textContent = String(records.length);
+        dom.statTotal.textContent = String(records.length);
+
+        let outDmk = 0, outBkk = 0, retDmk = 0, retBkk = 0;
+        records.forEach(function (r) {
+          if (r.outboundAirportCode === 'DMK') outDmk++;
+          if (r.outboundAirportCode === 'BKK') outBkk++;
+          if (r.returnAirportCode === 'DMK') retDmk++;
+          if (r.returnAirportCode === 'BKK') retBkk++;
+        });
+        dom.statOutDmk.textContent = String(outDmk);
+        dom.statOutBkk.textContent = String(outBkk);
+        dom.statRetDmk.textContent = String(retDmk);
+        dom.statRetBkk.textContent = String(retBkk);
+
+        if (records.length === 0) {
+          dom.recordsTableBody.innerHTML =
+            '<tr><td colspan="8" class="py-10 px-4 text-center text-slate-400 text-sm">' +
+            'ยังไม่มีรายชื่อผู้โดยสาร · เลือกเที่ยวบินและกรอกข้อมูลด้านบนเพื่อบันทึก' +
+            '</td></tr>';
+          return;
+        }
+
+        dom.recordsTableBody.innerHTML = records.map(function (rec, idx) {
+          const outBadge = rec.outboundAirportCode === 'DMK'
+            ? '<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[11px] font-bold">DMK</span>'
+            : (rec.outboundAirportCode === 'BKK'
+              ? '<span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[11px] font-bold">BKK</span>'
+              : '');
+
+          const retBadge = rec.returnAirportCode === 'DMK'
+            ? '<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[11px] font-bold">DMK</span>'
+            : (rec.returnAirportCode === 'BKK'
+              ? '<span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[11px] font-bold">BKK</span>'
+              : '');
+
+          const syncBadge = rec.syncedToSheet
+            ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">ส่งเข้า Sheet แล้ว</span>'
+            : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">บันทึกในเครื่อง</span>';
+
+          const enFullName = [rec.title, rec.firstNameEn, rec.middleNameEn, rec.lastNameEn].filter(Boolean).join(' ');
+
+          return (
+            '<tr class="hover:bg-slate-50/70 transition">' +
+              '<td class="py-3.5 px-4 text-slate-400 tabular-nums">' + (idx + 1) + '</td>' +
+              '<td class="py-3.5 px-4">' +
+                '<div class="font-bold text-slate-900 tracking-wide">' + escapeHtml(enFullName) + '</div>' +
+                (rec.fullNameTh ? '<div class="text-xs text-slate-600">' + escapeHtml(rec.fullNameTh) + '</div>' : '') +
+                '<div class="text-xs text-slate-400 mt-0.5">' + escapeHtml(rec.phone) + ' · ' + escapeHtml(rec.email) + '</div>' +
+              '</td>' +
+              '<td class="py-3.5 px-4 text-xs text-slate-600 tabular-nums">' +
+                '<div>เกิด: ' + escapeHtml(formatDobDisplay(rec.dob)) + '</div>' +
+                (rec.ropNumber ? '<div class="text-indigo-600 font-semibold mt-0.5">ROP: ' + escapeHtml(rec.ropNumber) + '</div>' : '<div class="text-slate-400 mt-0.5">ROP: -</div>') +
+              '</td>' +
+              '<td class="py-3.5 px-4">' +
+                (rec.outboundAirline
+                  ? '<div class="flex items-center gap-1.5">' + outBadge + '<span class="font-medium text-slate-800">' + escapeHtml(rec.outboundAirline) + '</span></div>' +
+                    '<div class="text-xs text-slate-500 tabular-nums mt-0.5">' + escapeHtml(rec.outboundTime) + '</div>'
+                  : '<span class="text-xs text-slate-400">-</span>') +
+              '</td>' +
+              '<td class="py-3.5 px-4">' +
+                (rec.returnAirline
+                  ? '<div class="flex items-center gap-1.5">' + retBadge + '<span class="font-medium text-slate-800">' + escapeHtml(rec.returnAirline) + '</span></div>' +
+                    '<div class="text-xs text-slate-500 tabular-nums mt-0.5">' + escapeHtml(rec.returnTime) + '</div>'
+                  : '<span class="text-xs text-slate-400">-</span>') +
+              '</td>' +
+              '<td class="py-3.5 px-4 text-xs text-slate-600 max-w-[190px]">' +
+                '<div>อาหาร: ' + escapeHtml(rec.specialMeal || 'ปกติ') + '</div>' +
+                '<div>ที่นั่ง: ' + escapeHtml(rec.seatAssist || 'ไม่ระบุ') + '</div>' +
+                (rec.notes ? '<div class="text-slate-400 mt-0.5">' + escapeHtml(rec.notes) + '</div>' : '') +
+              '</td>' +
+              '<td class="py-3.5 px-4">' + syncBadge + '</td>' +
+              '<td class="py-3.5 px-4 text-right">' +
+                '<button type="button" data-delete-id="' + escapeHtml(rec.id) + '" class="btn-delete-record text-xs font-medium text-rose-500 hover:text-rose-700 hover:underline cursor-pointer">ลบ</button>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+      }
+
+      function renderAll() {
+        renderTravelerPresetOptions();
+        renderFlightLists();
+        renderAirportFilter();
+        renderSelectionSummary();
+        renderSheetStatus();
+        renderRecordsTable();
+      }
+
+      // =========================================================
+      // 8. EVENT HANDLERS
+      // =========================================================
+      dom.selectTravelerPreset.addEventListener('change', function () {
+        const selectedId = dom.selectTravelerPreset.value;
+        dom.formErrorBox.classList.add('hidden');
+        if (!selectedId) {
+          dom.autofillHint.textContent = 'เลือกชื่อเพื่อเติมข้อมูลพื้นฐานอัตโนมัติ แล้วกรอกช่องที่เหลือเพิ่มเติมได้ตามต้องการ';
+          return;
+        }
+        const preset = TRAVELER_PRESETS.find(function (p) { return p.id === selectedId; });
+        if (!preset) return;
+
+        dom.inputTitle.value = preset.title || '';
+        dom.inputFirstNameEn.value = (preset.firstNameEn || '').toUpperCase();
+        dom.inputMiddleNameEn.value = '';
+        dom.inputLastNameEn.value = (preset.lastNameEn || '').toUpperCase();
+        dom.inputFullNameTh.value = preset.fullNameTh || '';
+        dom.inputDob.value = preset.dob || '';
+        dom.inputPhone.value = preset.phone || '';
+        dom.inputEmail.value = preset.email || '';
+
+        dom.inputRopNumber.value = '';
+        dom.inputSpecialMeal.value = 'ปกติ (Standard)';
+        dom.inputSeatAssist.value = 'ไม่ระบุ';
+        dom.inputNotes.value = '';
+
+        dom.autofillHint.textContent = 'เติมข้อมูลของ ' + preset.fullNameTh + ' แล้ว · สามารถเพิ่มข้อมูล ROP, อาหารพิเศษ, ที่นั่ง หรือหมายเหตุได้ด้านล่าง';
+        showToast('กรอกข้อมูลอัตโนมัติสำหรับ ' + preset.fullNameTh + ' แล้ว', 'success');
+      });
+
+      dom.btnResetTravelerFields.addEventListener('click', function () {
+        dom.travelForm.reset();
+        dom.selectTravelerPreset.value = '';
+        dom.formErrorBox.classList.add('hidden');
+        dom.autofillHint.textContent = 'เลือกชื่อเพื่อเติมข้อมูลพื้นฐานอัตโนมัติ แล้วกรอกช่องที่เหลือเพิ่มเติมได้ตามต้องการ';
+        showToast('ล้างข้อมูลในฟอร์มแล้ว', 'info');
+      });
+
+      [dom.inputFirstNameEn, dom.inputMiddleNameEn, dom.inputLastNameEn, dom.inputRopNumber].forEach(function (inp) {
+        inp.addEventListener('input', function () {
+          inp.value = inp.value.toUpperCase();
+        });
+      });
+
+      document.querySelectorAll('.airport-filter-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.airportFilter = btn.getAttribute('data-airport-filter');
+          renderAirportFilter();
+        });
+      });
+
+      document.querySelector('main').addEventListener('click', function (e) {
+        const card = e.target.closest('.flight-card');
+        if (!card) return;
+        const leg = card.getAttribute('data-leg');
+        const flightId = card.getAttribute('data-flight-id');
+        if (leg === 'outbound') {
+          state.selectedOutboundId = (state.selectedOutboundId === flightId) ? null : flightId;
+        } else if (leg === 'return') {
+          state.selectedReturnId = (state.selectedReturnId === flightId) ? null : flightId;
+        }
+        dom.formErrorBox.classList.add('hidden');
+        renderFlightLists();
+        renderSelectionSummary();
+      });
+
+      dom.btnClearSelection.addEventListener('click', function () {
+        state.selectedOutboundId = null;
+        state.selectedReturnId = null;
+        renderFlightLists();
+        renderSelectionSummary();
+        showToast('ล้างเที่ยวบินที่เลือกแล้ว', 'info');
+      });
+
+      dom.travelForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const title = dom.inputTitle.value.trim();
+        const firstNameEn = dom.inputFirstNameEn.value.trim().toUpperCase();
+        const middleNameEn = dom.inputMiddleNameEn.value.trim().toUpperCase();
+        const lastNameEn = dom.inputLastNameEn.value.trim().toUpperCase();
+        const fullNameTh = dom.inputFullNameTh.value.trim();
+        const dob = dom.inputDob.value.trim();
+        const phone = dom.inputPhone.value.trim();
+        const email = dom.inputEmail.value.trim();
+        const ropNumber = dom.inputRopNumber.value.trim().toUpperCase();
+        const specialMeal = dom.inputSpecialMeal.value;
+        const seatAssist = dom.inputSeatAssist.value;
+        const notes = dom.inputNotes.value.trim();
+
+        const outFlight = findFlight('outbound', state.selectedOutboundId);
+        const retFlight = findFlight('return', state.selectedReturnId);
+
+        function failForm(msg, el) {
+          dom.formErrorBox.textContent = msg;
+          dom.formErrorBox.classList.remove('hidden');
+          if (el && el.focus) el.focus();
+        }
+
+        if (!outFlight && !retFlight) {
+          failForm('กรุณาเลือกเที่ยวบินขาไป หรือเที่ยวบินขากลับ อย่างน้อย 1 เที่ยวบินก่อนบันทึกข้อมูล');
+          return;
+        }
+        if (!title) {
+          failForm('กรุณาเลือกคำนำหน้าชื่อ (Title)', dom.inputTitle);
+          return;
+        }
+        const engPattern = /^[A-Z\s]+$/;
+        if (!firstNameEn || !engPattern.test(firstNameEn)) {
+          failForm('กรุณากรอกชื่อจริงภาษาอังกฤษ (ตัวอักษร A–Z เท่านั้น)', dom.inputFirstNameEn);
+          return;
+        }
+        if (middleNameEn && !engPattern.test(middleNameEn)) {
+          failForm('ชื่อกลางต้องเป็นตัวอักษรภาษาอังกฤษ A–Z เท่านั้น', dom.inputMiddleNameEn);
+          return;
+        }
+        if (!lastNameEn || !engPattern.test(lastNameEn)) {
+          failForm('กรุณากรอกนามสกุลภาษาอังกฤษ (ตัวอักษร A–Z เท่านั้น)', dom.inputLastNameEn);
+          return;
+        }
+        if ([firstNameEn, middleNameEn, lastNameEn].filter(Boolean).join(' ').length > 48) {
+          failForm('ความยาวชื่อและนามสกุลภาษาอังกฤษรวมกันต้องไม่เกิน 48 ตัวอักษร', dom.inputFirstNameEn);
+          return;
+        }
+        if (!dob) {
+          failForm('กรุณาระบุวันเดือนปีเกิด', dom.inputDob);
+          return;
+        }
+        if (!phone) {
+          failForm('กรุณากรอกหมายเลขโทรศัพท์มือถือ', dom.inputPhone);
+          return;
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          failForm('กรุณากรอกอีเมลให้ถูกต้อง', dom.inputEmail);
+          return;
+        }
+
+        dom.formErrorBox.classList.add('hidden');
+
+        const timestamp = new Date().toLocaleString('th-TH', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        const payload = {
+          id: 'rec_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          timestamp: timestamp,
+          title: title,
+          firstNameEn: firstNameEn,
+          middleNameEn: middleNameEn,
+          lastNameEn: lastNameEn,
+          fullNameTh: fullNameTh,
+          dob: dob,
+          phone: phone,
+          email: email,
+          ropNumber: ropNumber,
+          specialMeal: specialMeal,
+          seatAssist: seatAssist,
+          outboundAirportCode: outFlight ? outFlight.airportCode : '',
+          outboundAirport: outFlight ? outFlight.airportName : '',
+          outboundAirline: outFlight ? outFlight.airline : '',
+          outboundTime: outFlight ? (outFlight.depart + ' - ' + outFlight.arrive + ' น.') : '',
+          returnAirportCode: retFlight ? retFlight.airportCode : '',
+          returnAirport: retFlight ? retFlight.airportName : '',
+          returnAirline: retFlight ? retFlight.airline : '',
+          returnTime: retFlight ? (retFlight.depart + ' - ' + retFlight.arrive + ' น.') : '',
+          notes: notes,
+          syncedToSheet: false
+        };
+
+        const displayName = fullNameTh || (title + ' ' + firstNameEn + ' ' + lastNameEn);
+        const hasGasUrl = Boolean(state.gasUrl && state.gasUrl.indexOf('https://script.google.com/') === 0);
+
+        if (hasGasUrl) {
+          dom.btnSubmitTravel.disabled = true;
+          dom.btnSubmitLabel.textContent = 'กำลังส่งเข้า Google Sheets...';
+          try {
+            await fetch(state.gasUrl, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload)
+            });
+            payload.syncedToSheet = true;
+            showToast('บันทึกข้อมูลของ ' + displayName + ' ลง Google Sheets เรียบร้อยแล้ว', 'success');
+          } catch (err) {
+            payload.syncedToSheet = false;
+            showToast('ส่งเข้า Google Sheets ไม่สำเร็จ แต่บันทึกสำเนาไว้ในตารางแล้ว', 'warning');
+          } finally {
+            dom.btnSubmitTravel.disabled = false;
+            dom.btnSubmitLabel.textContent = 'บันทึกข้อมูลผู้โดยสารลง Google Sheets';
+          }
+        } else {
+          showToast('บันทึกข้อมูลของ ' + displayName + ' ในตารางแล้ว', 'success');
+        }
+
+        state.records.push(payload);
+        saveStoredRecords();
+        dom.travelForm.reset();
+        dom.selectTravelerPreset.value = '';
+        dom.autofillHint.textContent = 'เลือกชื่อเพื่อเติมข้อมูลพื้นฐานอัตโนมัติ แล้วกรอกช่องที่เหลือเพิ่มเติมได้ตามต้องการ';
+        renderRecordsTable();
+      });
+
+      dom.recordsTableBody.addEventListener('click', function (e) {
+        const delBtn = e.target.closest('.btn-delete-record');
+        if (!delBtn) return;
+        const targetId = delBtn.getAttribute('data-delete-id');
+        state.records = state.records.filter(function (r) { return r.id !== targetId; });
+        saveStoredRecords();
+        renderRecordsTable();
+        showToast('ลบรายการออกจากตารางแล้ว', 'info');
+      });
+
+      dom.btnClearAllRecords.addEventListener('click', function () {
+        if (state.records.length === 0) {
+          showToast('ยังไม่มีรายการข้อมูลให้ล้าง', 'info');
+          return;
+        }
+        dom.confirmClearBanner.classList.remove('hidden');
+      });
+
+      dom.btnConfirmClearYes.addEventListener('click', function () {
+        state.records = [];
+        saveStoredRecords();
+        dom.confirmClearBanner.classList.add('hidden');
+        renderRecordsTable();
+        showToast('ล้างรายชื่อในเครื่องทั้งหมดแล้ว', 'info');
+      });
+
+      dom.btnConfirmClearNo.addEventListener('click', function () {
+        dom.confirmClearBanner.classList.add('hidden');
+      });
+
+      dom.btnExportCsv.addEventListener('click', function () {
+        if (state.records.length === 0) {
+          showToast('ยังไม่มีข้อมูลสำหรับดาวน์โหลด CSV', 'warning');
+          return;
+        }
+        const headers = [
+          'เวลาบันทึก',
+          'คำนำหน้า (Title)',
+          'ชื่อจริง (First Name EN)',
+          'ชื่อกลาง (Middle Name EN)',
+          'นามสกุล (Last Name EN)',
+          'ชื่อ-นามสกุล (ภาษาไทย)',
+          'วันเดือนปีเกิด (DOB)',
+          'เบอร์โทรศัพท์มือถือ',
+          'อีเมล (Email)',
+          'สมาชิก Royal Orchid Plus (ROP)',
+          'อาหารพิเศษ (Special Meal)',
+          'ที่นั่ง / ความช่วยเหลือพิเศษ',
+          'สนามบินขาไป (19 ม.ค. 70)',
+          'สายการบินขาไป',
+          'เวลาขาไป',
+          'สนามบินขากลับ (21 ม.ค. 70)',
+          'สายการบินขากลับ',
+          'เวลาขากลับ',
+          'หมายเหตุ'
+        ];
+        function csvCell(v) {
+          return '"' + String(v || '').replace(/"/g, '""') + '"';
+        }
+        const lines = [headers.map(csvCell).join(',')];
+        state.records.forEach(function (r) {
+          lines.push([
+            r.timestamp,
+            r.title,
+            r.firstNameEn,
+            r.middleNameEn,
+            r.lastNameEn,
+            r.fullNameTh,
+            formatDobDisplay(r.dob),
+            r.phone,
+            r.email,
+            r.ropNumber,
+            r.specialMeal,
+            r.seatAssist,
+            r.outboundAirport,
+            r.outboundAirline,
+            r.outboundTime,
+            r.returnAirport,
+            r.returnAirline,
+            r.returnTime,
+            r.notes
+          ].map(csvCell).join(','));
+        });
+        const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'travel_bkk_cei_19_21_jan_2570.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('ดาวน์โหลดไฟล์ CSV เรียบร้อยแล้ว', 'success');
+      });
+
+      function openSheetModal() {
+        dom.inputGasUrl.value = state.gasUrl || '';
+        dom.sheetModal.classList.remove('hidden');
+        dom.sheetModal.classList.add('flex');
+      }
+
+      function closeSheetModal() {
+        dom.sheetModal.classList.add('hidden');
+        dom.sheetModal.classList.remove('flex');
+      }
+
+      dom.btnOpenSheetSettings.addEventListener('click', openSheetModal);
+      dom.btnOpenSheetSettingsInline.addEventListener('click', openSheetModal);
+      dom.btnCloseSheetModal.addEventListener('click', closeSheetModal);
+      dom.sheetModal.addEventListener('click', function (e) {
+        if (e.target === dom.sheetModal) closeSheetModal();
+      });
+
+      dom.btnSaveGasUrl.addEventListener('click', function () {
+        const val = dom.inputGasUrl.value.trim();
+        if (val && val.indexOf('https://script.google.com/') !== 0) {
+          showToast('กรุณากรอก URL ที่ขึ้นต้นด้วย https://script.google.com/', 'error');
+          return;
+        }
+        state.gasUrl = val;
+        saveStoredGasUrl(val);
+        renderSheetStatus();
+        closeSheetModal();
+        showToast(val ? 'บันทึกลิงก์เชื่อมต่อ Google Sheets แล้ว' : 'เปลี่ยนกลับเป็นโหมดบันทึกในเครื่องแล้ว', 'success');
+      });
+
+      dom.btnClearGasUrl.addEventListener('click', function () {
+        dom.inputGasUrl.value = '';
+        state.gasUrl = '';
+        saveStoredGasUrl('');
+        renderSheetStatus();
+        showToast('ล้างลิงก์เชื่อมต่อแล้ว', 'info');
+      });
+
+      dom.btnCopyGasCode.addEventListener('click', function () {
+        const codeText = dom.gasCodeBlock.textContent;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(codeText).then(function () {
+            showToast('คัดลอกโค้ด Apps Script เรียบร้อยแล้ว', 'success');
+          }).catch(function () {
+            fallbackCopy(codeText);
+          });
+        } else {
+          fallbackCopy(codeText);
+        }
+      });
+
+      function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('คัดลอกโค้ด Apps Script เรียบร้อยแล้ว', 'success');
+        } catch (err) {
+          showToast('ไม่สามารถคัดลอกอัตโนมัติได้ กรุณาลากคลุมโค้ดเพื่อคัดลอก', 'warning');
+        }
+        document.body.removeChild(ta);
+      }
+
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
