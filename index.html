@@ -8,13 +8,7 @@
   <style>
     :root {
       --bg-page: #f5f7fb;
-      --surface: #ffffff;
       --ink-main: #0f172a;
-      --ink-muted: #64748b;
-    }
-
-    html {
-      scroll-behavior: smooth;
     }
 
     body {
@@ -31,7 +25,7 @@
     }
 
     .app-container {
-      max-width: 1120px;
+      max-width: 1080px;
       margin-left: auto;
       margin-right: auto;
     }
@@ -45,7 +39,7 @@
 
     .flight-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 28px -14px rgba(15, 23, 42, 0.18);
+      box-shadow: 0 12px 26px -14px rgba(15, 23, 42, 0.18);
     }
 
     .flight-card[data-selected="true"].card-dmk {
@@ -60,14 +54,19 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
     }
 
-    .floating-dock {
-      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
+    .step-panel {
+      animation: stepFadeIn 0.26s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .floating-dock.dock-hidden {
-      transform: translateY(120%);
-      opacity: 0;
-      pointer-events: none;
+    @keyframes stepFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .toast-enter {
@@ -84,18 +83,14 @@
         transform: translateY(0);
       }
     }
-
-    .section-anchor {
-      scroll-margin-top: 88px;
-    }
   </style>
 </head>
-<body class="min-h-screen bg-[#f5f7fb] text-slate-800 pb-28">
+<body class="min-h-screen bg-[#f5f7fb] text-slate-800 pb-12">
   <!-- Clean Frosted Top Navigation -->
   <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
     <div class="app-container px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0" aria-hidden="true">
+        <div class="w-9 h-9 rounded-xl bg-[#F4EEFA] text-[#532989] flex items-center justify-center shrink-0" aria-hidden="true">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
@@ -105,27 +100,10 @@
             กรุงเทพฯ – เชียงราย (19–21 ม.ค. 2570)
           </h1>
           <p class="text-xs text-slate-500 truncate hidden sm:block">
-            เลือกเที่ยวบินแยกสนามบิน และลงทะเบียนเดินทางลง Google Sheets
+            เลือกเที่ยวบินทีละขั้นตอน และจัดเก็บข้อมูลลง Google Sheets
           </p>
         </div>
       </div>
-
-      <!-- Quick Step Navigation (Desktop) -->
-      <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl text-xs font-medium" aria-label="ขั้นตอนการใช้งาน">
-        <a href="#outboundSection" id="navStep1" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/80 transition">
-          1. ขาไป
-        </a>
-        <a href="#returnSection" id="navStep2" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/80 transition">
-          2. ขากลับ
-        </a>
-        <a href="#registrationSection" id="navStep3" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/80 transition">
-          3. กรอกข้อมูล
-        </a>
-        <a href="#recordsSection" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/80 transition flex items-center gap-1.5">
-          <span>รายชื่อ</span>
-          <span id="headerRegCount" class="px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-bold tabular-nums">0</span>
-        </a>
-      </nav>
 
       <div class="flex items-center gap-2 shrink-0">
         <button
@@ -133,183 +111,291 @@
           type="button"
           class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 transition cursor-pointer"
         >
-          <span id="sheetStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="sheetStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span>Google Sheets</span>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="app-container px-4 sm:px-6 pt-6 sm:pt-8 space-y-10">
-    <!-- Hero / Filter Strip -->
-    <section class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-      <div class="space-y-1">
-        <h2 class="text-lg sm:text-xl font-bold text-slate-900">
-          เปรียบเทียบเที่ยวบินตรง แยกตามสนามบิน
-        </h2>
-        <p class="text-sm text-slate-500">
-          แตะเลือกเที่ยวบินขาไปและขากลับที่ต้องการ แล้วเลื่อนลงไปเลือกชื่อผู้เดินทางเพื่อบันทึกได้ทันที
-        </p>
-      </div>
+  <main class="app-container px-4 sm:px-6 pt-6 space-y-6">
+    <!-- INTERACTIVE 4-STEP CARD STEPPER -->
+    <nav aria-label="ขั้นตอนการเลือกและบันทึกข้อมูล" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-2.5 sm:p-3">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <button
+          type="button"
+          data-goto-step="1"
+          id="stepTab1"
+          class="step-tab flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition cursor-pointer"
+        >
+          <span id="stepNum1" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
+          <div class="min-w-0">
+            <div class="text-xs font-bold truncate">เที่ยวบินขาไป</div>
+            <div id="stepSub1" class="text-[11px] truncate opacity-80">19 ม.ค. 2570</div>
+          </div>
+        </button>
 
-      <div class="flex flex-wrap items-center gap-2" role="group" aria-label="ตัวกรองสนามบิน">
         <button
           type="button"
-          data-airport-filter="ALL"
-          class="airport-filter-btn px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition cursor-pointer"
+          data-goto-step="2"
+          id="stepTab2"
+          class="step-tab flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition cursor-pointer"
         >
-          ทั้ง 2 สนามบิน
+          <span id="stepNum2" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
+          <div class="min-w-0">
+            <div class="text-xs font-bold truncate">เที่ยวบินขากลับ</div>
+            <div id="stepSub2" class="text-[11px] truncate opacity-80">21 ม.ค. 2570</div>
+          </div>
         </button>
+
         <button
           type="button"
-          data-airport-filter="DMK"
-          class="airport-filter-btn px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition cursor-pointer"
+          data-goto-step="3"
+          id="stepTab3"
+          class="step-tab flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition cursor-pointer"
         >
-          ดอนเมือง (DMK)
+          <span id="stepNum3" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
+          <div class="min-w-0">
+            <div class="text-xs font-bold truncate">กรอกข้อมูลเดินทาง</div>
+            <div id="stepSub3" class="text-[11px] truncate opacity-80">บันทึก Google Sheets</div>
+          </div>
         </button>
+
         <button
           type="button"
-          data-airport-filter="BKK"
-          class="airport-filter-btn px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition cursor-pointer"
+          data-goto-step="4"
+          id="stepTab4"
+          class="step-tab flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition cursor-pointer"
         >
-          สุวรรณภูมิ (BKK)
-        </button>
-        <button
-          id="btnClearSelection"
-          type="button"
-          class="px-3.5 py-2 rounded-full text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
-        >
-          ล้างตัวเลือก
+          <span id="stepNum4" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0">4</span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-xs font-bold truncate">รายชื่อผู้เดินทาง</span>
+              <span id="headerRegCount" class="px-1.5 py-0.5 rounded-full text-[11px] font-bold tabular-nums bg-slate-200/80 text-slate-700">0</span>
+            </div>
+            <div class="text-[11px] truncate opacity-80">สรุปและส่งออก CSV</div>
+          </div>
         </button>
       </div>
-    </section>
+    </nav>
 
-    <!-- STEP 1: OUTBOUND FLIGHTS -->
-    <section id="outboundSection" class="section-anchor space-y-4">
-      <div class="flex flex-wrap items-end justify-between gap-2 px-1">
+    <!-- ======================================================= -->
+    <!-- STEP 1 CARD: OUTBOUND FLIGHTS -->
+    <!-- ======================================================= -->
+    <section id="stepPanel1" class="step-panel bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <div class="text-xs font-semibold text-indigo-600 mb-0.5">ขั้นตอนที่ 1 · เที่ยวบินขาไป</div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 mb-1.5">
+            ขั้นตอนที่ 1 จาก 4 · เที่ยวบินขาไป
+          </span>
           <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
-            กรุงเทพฯ → เชียงราย (CEI)
+            กรุงเทพฯ (DMK / BKK) → เชียงราย (CEI)
           </h2>
-          <p class="text-sm text-slate-500">
-            วันอังคารที่ 19 มกราคม 2570 · เที่ยวบินแรกของทุกสายการบิน
+          <p class="text-sm text-slate-500 mt-0.5">
+            วันอังคารที่ 19 มกราคม 2570 · เที่ยวบินตรงรอบแรกของทุกสายการบิน
           </p>
         </div>
-        <div id="outboundSelectedBadge" class="text-xs sm:text-sm font-medium text-slate-400">
-          ยังไม่ได้เลือกเที่ยวบินขาไป
+
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="ตัวกรองสนามบินขาไป">
+          <button type="button" data-airport-filter="ALL" class="airport-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer">
+            ทั้ง 2 สนามบิน
+          </button>
+          <button type="button" data-airport-filter="DMK" class="airport-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer">
+            ดอนเมือง (DMK)
+          </button>
+          <button type="button" data-airport-filter="BKK" class="airport-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer">
+            สุวรรณภูมิ (BKK)
+          </button>
         </div>
       </div>
 
-      <div id="outboundGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- DMK Outbound -->
-        <div data-airport-col="DMK" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div class="px-5 py-4 bg-gradient-to-r from-amber-50/90 to-white border-b border-amber-100 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+      <div class="p-5 sm:p-6">
+        <div id="outboundGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- DMK Outbound -->
+          <div data-airport-col="DMK" class="rounded-2xl border border-amber-200/80 bg-amber-50/20 overflow-hidden">
+            <div class="px-4 py-3.5 bg-gradient-to-r from-amber-50 to-white border-b border-amber-100 flex items-center gap-3">
               <span class="px-2.5 py-1 rounded-lg bg-amber-500 text-white text-xs font-bold tracking-wide">DMK</span>
               <div>
-                <h3 class="text-base font-bold text-slate-900">ท่าอากาศยานดอนเมือง</h3>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">ท่าอากาศยานดอนเมือง</h3>
                 <p class="text-xs text-slate-500">3 สายการบิน · 06:50 – 08:35 น.</p>
               </div>
             </div>
+            <div id="outboundDmkList" class="p-3.5 space-y-3"></div>
           </div>
-          <div id="outboundDmkList" class="p-4 space-y-3"></div>
-        </div>
 
-        <!-- BKK Outbound -->
-        <div data-airport-col="BKK" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div class="px-5 py-4 bg-gradient-to-r from-blue-50/90 to-white border-b border-blue-100 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+          <!-- BKK Outbound -->
+          <div data-airport-col="BKK" class="rounded-2xl border border-blue-200/80 bg-blue-50/20 overflow-hidden">
+            <div class="px-4 py-3.5 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100 flex items-center gap-3">
               <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide">BKK</span>
               <div>
-                <h3 class="text-base font-bold text-slate-900">ท่าอากาศยานสุวรรณภูมิ</h3>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">ท่าอากาศยานสุวรรณภูมิ</h3>
                 <p class="text-xs text-slate-500">2 สายการบิน · 06:30 – 08:10 น.</p>
               </div>
             </div>
+            <div id="outboundBkkList" class="p-3.5 space-y-3"></div>
           </div>
-          <div id="outboundBkkList" class="p-4 space-y-3"></div>
         </div>
+      </div>
+
+      <!-- Step 1 Card Footer -->
+      <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <div id="outboundSelectedBadge" class="text-xs sm:text-sm font-medium text-slate-500">
+            ยังไม่ได้เลือกเที่ยวบินขาไป
+          </div>
+          <button id="btnClearSelection" type="button" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 transition cursor-pointer">
+            ล้างตัวเลือก
+          </button>
+        </div>
+
+        <button
+          id="btnStep1Next"
+          type="button"
+          data-goto-step="2"
+          class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-xs transition cursor-pointer"
+        >
+          <span>ถัดไป: เลือกเที่ยวบินขากลับ</span>
+          <span aria-hidden="true">→</span>
+        </button>
       </div>
     </section>
 
-    <!-- STEP 2: RETURN FLIGHTS -->
-    <section id="returnSection" class="section-anchor space-y-4">
-      <div class="flex flex-wrap items-end justify-between gap-2 px-1">
+    <!-- ======================================================= -->
+    <!-- STEP 2 CARD: RETURN FLIGHTS -->
+    <!-- ======================================================= -->
+    <section id="stepPanel2" class="step-panel hidden bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <div class="text-xs font-semibold text-indigo-600 mb-0.5">ขั้นตอนที่ 2 · เที่ยวบินขากลับ</div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mb-1.5">
+            ขั้นตอนที่ 2 จาก 4 · เที่ยวบินขากลับ
+          </span>
           <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
-            เชียงราย (CEI) → กรุงเทพฯ
+            เชียงราย (CEI) → กรุงเทพฯ (DMK / BKK)
           </h2>
-          <p class="text-sm text-slate-500">
+          <p class="text-sm text-slate-500 mt-0.5">
             วันพฤหัสบดีที่ 21 มกราคม 2570 · ช่วงเวลาออกเดินทาง 14:00 – 17:00 น.
           </p>
         </div>
-        <div id="returnSelectedBadge" class="text-xs sm:text-sm font-medium text-slate-400">
-          ยังไม่ได้เลือกเที่ยวบินขากลับ
+
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="ตัวกรองสนามบินขากลับ">
+          <button type="button" data-airport-filter="ALL" class="airport-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer">
+            ทั้ง 2 สนามบิน
+          </button>
+          <button type="button" data-airport-filter="DMK" class="airport-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer">
+            ดอนเมือง (DMK)
+          </button>
+          <button type="button" data-airport-filter="BKK" class="airport-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer">
+            สุวรรณภูมิ (BKK)
+          </button>
         </div>
       </div>
 
-      <div id="returnGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- DMK Return -->
-        <div data-airport-col="DMK" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div class="px-5 py-4 bg-gradient-to-r from-amber-50/90 to-white border-b border-amber-100 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+      <div class="p-5 sm:p-6 space-y-5">
+        <!-- Mini Outbound Recap Pill -->
+        <div id="step2OutboundRecap" class="rounded-2xl bg-slate-50 border border-slate-200/80 px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+          <div class="text-slate-600">
+            <span class="font-semibold text-slate-800">ขาไปที่เลือกไว้:</span>
+            <span id="step2OutboundRecapText" class="ml-1 text-slate-500">ยังไม่ได้เลือก</span>
+          </div>
+          <button type="button" data-goto-step="1" class="text-xs font-semibold text-[#532989] hover:underline cursor-pointer">
+            แก้ไขขาไป
+          </button>
+        </div>
+
+        <div id="returnGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- DMK Return -->
+          <div data-airport-col="DMK" class="rounded-2xl border border-amber-200/80 bg-amber-50/20 overflow-hidden">
+            <div class="px-4 py-3.5 bg-gradient-to-r from-amber-50 to-white border-b border-amber-100 flex items-center gap-3">
               <span class="px-2.5 py-1 rounded-lg bg-amber-500 text-white text-xs font-bold tracking-wide">DMK</span>
               <div>
-                <h3 class="text-base font-bold text-slate-900">ลงท่าอากาศยานดอนเมือง</h3>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">ลงท่าอากาศยานดอนเมือง</h3>
                 <p class="text-xs text-slate-500">3 เที่ยวบิน · 14:00 – 16:10 น.</p>
               </div>
             </div>
+            <div id="returnDmkList" class="p-3.5 space-y-3"></div>
+            <div class="px-3.5 pb-3.5">
+              <p class="text-xs text-slate-500 bg-white/90 border border-amber-100 rounded-xl px-3 py-2">
+                หมายเหตุ: Nok Air ไม่มีเที่ยวบินตรงขากลับในช่วงเวลา 14:00 – 17:00 น.
+              </p>
+            </div>
           </div>
-          <div id="returnDmkList" class="p-4 space-y-3"></div>
-          <div class="px-4 pb-4">
-            <p class="text-xs text-slate-500 bg-slate-50 rounded-xl px-3.5 py-2.5">
-              หมายเหตุ: Nok Air ไม่มีเที่ยวบินตรงขากลับในช่วงเวลา 14:00 – 17:00 น.
-            </p>
-          </div>
-        </div>
 
-        <!-- BKK Return -->
-        <div data-airport-col="BKK" class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-          <div class="px-5 py-4 bg-gradient-to-r from-blue-50/90 to-white border-b border-blue-100 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+          <!-- BKK Return -->
+          <div data-airport-col="BKK" class="rounded-2xl border border-blue-200/80 bg-blue-50/20 overflow-hidden">
+            <div class="px-4 py-3.5 bg-gradient-to-r from-blue-50 to-white border-b border-blue-100 flex items-center gap-3">
               <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-wide">BKK</span>
               <div>
-                <h3 class="text-base font-bold text-slate-900">ลงท่าอากาศยานสุวรรณภูมิ</h3>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">ลงท่าอากาศยานสุวรรณภูมิ</h3>
                 <p class="text-xs text-slate-500">2 เที่ยวบิน · 14:25 – 15:20 น.</p>
               </div>
             </div>
+            <div id="returnBkkList" class="p-3.5 space-y-3"></div>
           </div>
-          <div id="returnBkkList" class="p-4 space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- Step 2 Card Footer -->
+      <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          data-goto-step="1"
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-sm font-semibold transition cursor-pointer"
+        >
+          <span aria-hidden="true">←</span>
+          <span>ย้อนกลับ (ขาไป)</span>
+        </button>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div id="returnSelectedBadge" class="text-xs sm:text-sm font-medium text-slate-500">
+            ยังไม่ได้เลือกเที่ยวบินขากลับ
+          </div>
+          <button
+            id="btnStep2Next"
+            type="button"
+            data-goto-step="3"
+            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#4E2A84] to-[#6E2D91] hover:from-[#3A1966] hover:to-[#532989] text-white text-sm font-semibold shadow-xs border-b-2 border-[#D4AF37] transition cursor-pointer"
+          >
+            <span>ถัดไป: กรอกข้อมูลผู้เดินทาง</span>
+            <span aria-hidden="true">→</span>
+          </button>
         </div>
       </div>
     </section>
 
-    <!-- STEP 3: TRAVELER REGISTRATION FORM (THAI AIRWAYS THEME) -->
-    <section id="registrationSection" class="section-anchor bg-white rounded-3xl border border-[#DFD2F2] shadow-sm overflow-hidden">
+    <!-- ======================================================= -->
+    <!-- STEP 3 CARD: REGISTRATION FORM (THAI AIRWAYS THEME) -->
+    <!-- ======================================================= -->
+    <section id="stepPanel3" class="step-panel hidden bg-white rounded-3xl border border-[#DFD2F2] shadow-sm overflow-hidden">
       <div class="px-6 py-5 bg-gradient-to-r from-[#3A1966] via-[#532989] to-[#6E2D91] text-white border-b-[3px] border-[#D4AF37] flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div class="text-xs font-semibold text-[#F7DC7B] tracking-wide">ขั้นตอนที่ 3 · ลงทะเบียนผู้เดินทาง</div>
+          <div class="text-xs font-semibold text-[#F7DC7B] tracking-wide">ขั้นตอนที่ 3 จาก 4 · ลงทะเบียนผู้เดินทาง</div>
           <h2 class="text-xl font-bold text-white mt-0.5">กรอกข้อมูลการเดินทางเพื่อจัดเก็บลง Google Sheets</h2>
         </div>
-        <div id="formSyncStatus" class="text-xs font-medium px-3.5 py-1.5 rounded-full bg-white/15 text-[#FBE8A6] border border-[#F7DC7B]/40 backdrop-blur-xs">
-          โหมดบันทึกในเครื่อง (ยังไม่ได้เชื่อมต่อ Apps Script)
+        <div id="formSyncStatus" class="text-xs font-medium px-3.5 py-1.5 rounded-full bg-emerald-400/20 text-emerald-100 border border-emerald-300/40 backdrop-blur-xs">
+          เชื่อมต่อ Google Sheets พร้อมส่งอัตโนมัติ
         </div>
       </div>
 
-      <form id="travelForm" class="p-6 space-y-7" novalidate>
-        <!-- Selected Flights Recap -->
+      <form id="travelForm" class="p-6 space-y-6" novalidate>
+        <!-- Selected Flights Recap with Quick Edit Links -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div id="summaryOutboundBox" class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 transition">
-            <div class="text-xs font-semibold text-slate-400">เที่ยวบินขาไป · 19 ม.ค. 2570</div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs font-semibold text-slate-500">เที่ยวบินขาไป · 19 ม.ค. 2570</div>
+              <button type="button" data-goto-step="1" class="text-xs font-semibold text-[#532989] hover:underline cursor-pointer">เปลี่ยน</button>
+            </div>
             <div id="summaryOutboundContent" class="mt-1.5 text-sm text-slate-500">
-              ยังไม่ได้เลือก (แตะเลือกเที่ยวบินด้านบน)
+              ยังไม่ได้เลือก
             </div>
           </div>
+
           <div id="summaryReturnBox" class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 transition">
-            <div class="text-xs font-semibold text-slate-400">เที่ยวบินขากลับ · 21 ม.ค. 2570</div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs font-semibold text-slate-500">เที่ยวบินขากลับ · 21 ม.ค. 2570</div>
+              <button type="button" data-goto-step="2" class="text-xs font-semibold text-[#532989] hover:underline cursor-pointer">เปลี่ยน</button>
+            </div>
             <div id="summaryReturnContent" class="mt-1.5 text-sm text-slate-500">
-              ยังไม่ได้เลือก (แตะเลือกเที่ยวบินด้านบน)
+              ยังไม่ได้เลือก
             </div>
           </div>
         </div>
@@ -462,8 +548,7 @@
             </div>
           </div>
 
-          <!-- Optional Preferences Row -->
-          <div class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label for="inputRopNumber" class="block text-xs font-semibold text-slate-600 mb-1.5">
                 สมาชิก Royal Orchid Plus (ROP)
@@ -475,24 +560,6 @@
                 placeholder="ถ้ามี (10 หลัก)"
                 class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm uppercase tabular-nums focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
               />
-            </div>
-
-            <div>
-              <label for="inputSpecialMeal" class="block text-xs font-semibold text-slate-600 mb-1.5">
-                อาหารพิเศษ (Special Meal)
-              </label>
-              <select
-                id="inputSpecialMeal"
-                name="specialMeal"
-                class="w-full rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#532989]/25 focus:border-[#532989] transition"
-              >
-                <option value="ปกติ (Standard)">ปกติ (Standard)</option>
-                <option value="มังสวิรัติ (VGML)">มังสวิรัติ (VGML)</option>
-                <option value="อาหารฮาลาล (MOML)">อาหารฮาลาล (MOML)</option>
-                <option value="อาหารทะเล (SFML)">อาหารทะเล (SFML)</option>
-                <option value="ไม่รับประทานเนื้อวัว (NBML)">ไม่รับประทานเนื้อวัว (NBML)</option>
-                <option value="อาหารไขมันต่ำ (LFML)">อาหารไขมันต่ำ (LFML)</option>
-              </select>
             </div>
 
             <div>
@@ -529,24 +596,31 @@
         <!-- Inline Form Error Message -->
         <div id="formErrorBox" class="hidden rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-800"></div>
 
-        <!-- Submit Controls -->
+        <!-- Step 3 Card Footer -->
         <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100">
-          <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              data-goto-step="2"
+              class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition cursor-pointer"
+            >
+              <span aria-hidden="true">←</span>
+              <span>ย้อนกลับ</span>
+            </button>
             <a
               href="https://docs.google.com/spreadsheets/d/1ZLrpMTc2Y81lPVuBxq3fUK9kcNNLxvG0ErIq6q69ZHQ/edit"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-emerald-700 hover:text-emerald-800 font-semibold underline underline-offset-2"
+              class="text-xs text-emerald-700 hover:text-emerald-800 font-semibold underline underline-offset-2"
             >
               เปิด Google Sheet
             </a>
-            <span class="text-slate-300">|</span>
             <button
               id="btnOpenSheetSettingsInline"
               type="button"
-              class="text-[#532989] hover:text-[#3A1966] font-semibold underline underline-offset-2 cursor-pointer"
+              class="text-xs text-[#532989] hover:text-[#3A1966] font-semibold underline underline-offset-2 cursor-pointer"
             >
-              ตั้งค่าส่งข้อมูลอัตโนมัติ (Apps Script)
+              ตั้งค่า Apps Script
             </button>
           </div>
 
@@ -564,16 +638,29 @@
       </form>
     </section>
 
-    <!-- STEP 4: REGISTERED TRAVELERS TABLE -->
-    <section id="recordsSection" class="section-anchor bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <!-- ======================================================= -->
+    <!-- STEP 4 CARD: REGISTERED TRAVELERS SUMMARY -->
+    <!-- ======================================================= -->
+    <section id="stepPanel4" class="step-panel hidden bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
       <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">รายชื่อผู้โดยสารที่ลงทะเบียนแล้ว</h2>
-          <p class="text-xs sm:text-sm text-slate-500">
-            สรุปข้อมูลการเดินทางครบ 19 คอลัมน์ พร้อมดาวน์โหลด CSV นำเข้า Google Sheets ได้ทันที
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 mb-1.5">
+            ขั้นตอนที่ 4 จาก 4 · สรุปรายชื่อผู้เดินทาง
+          </span>
+          <h2 class="text-xl font-bold text-slate-900">รายชื่อผู้โดยสารที่ลงทะเบียนแล้ว</h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+            ข้อมูลถูกส่งเข้า Google Sheets อัตโนมัติ และสามารถดาวน์โหลดเป็นไฟล์ CSV ได้ทันที
           </p>
         </div>
+
         <div class="flex flex-wrap items-center gap-2">
+          <button
+            id="btnAddAnotherTraveler"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-[#4E2A84] to-[#6E2D91] hover:from-[#3A1966] hover:to-[#532989] text-white shadow-xs transition cursor-pointer"
+          >
+            + ลงทะเบียนท่านถัดไป
+          </button>
           <button
             id="btnExportCsv"
             type="button"
@@ -648,39 +735,13 @@
     </footer>
   </main>
 
-  <!-- FLOATING SELECTION DOCK (Smooth Flow Guide) -->
-  <div id="floatingDock" class="floating-dock dock-hidden fixed bottom-4 inset-x-0 z-40 px-4 pointer-events-none">
-    <div class="app-container flex justify-center">
-      <div class="pointer-events-auto bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-xl border border-slate-700/80 px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3 w-full max-w-3xl">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm min-w-0">
-          <div class="flex items-center gap-1.5">
-            <span class="text-slate-400">ขาไป:</span>
-            <span id="dockOutboundText" class="font-semibold text-white">ยังไม่เลือก</span>
-          </div>
-          <span class="text-slate-600 hidden sm:inline">•</span>
-          <div class="flex items-center gap-1.5">
-            <span class="text-slate-400">ขากลับ:</span>
-            <span id="dockReturnText" class="font-semibold text-white">ยังไม่เลือก</span>
-          </div>
-        </div>
-        <a
-          id="dockActionBtn"
-          href="#registrationSection"
-          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs sm:text-sm font-semibold transition shrink-0"
-        >
-          <span id="dockActionLabel">ไปกรอกข้อมูล →</span>
-        </a>
-      </div>
-    </div>
-  </div>
-
   <!-- GOOGLE SHEETS CONNECTION MODAL -->
   <div id="sheetModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4" role="dialog" aria-modal="true" aria-labelledby="sheetModalTitle">
     <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
       <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
         <div>
           <h3 id="sheetModalTitle" class="text-base sm:text-lg font-bold">เชื่อมต่อจัดเก็บข้อมูลลง Google Sheets</h3>
-          <p class="text-xs text-slate-300">เชื่อมต่อตรงเข้าแท็บ "ข้อมูลการเดินทาง" (19 คอลัมน์)</p>
+          <p class="text-xs text-slate-300">เชื่อมต่อตรงเข้าแท็บ "ข้อมูลการเดินทาง" (18 คอลัมน์)</p>
         </div>
         <button id="btnCloseSheetModal" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center cursor-pointer" aria-label="ปิดหน้าต่าง">
           ✕
@@ -690,7 +751,7 @@
       <div class="p-6 overflow-y-auto space-y-5 text-sm">
         <div class="rounded-2xl bg-emerald-50 border border-emerald-200/80 p-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div class="text-xs font-semibold text-emerald-700">ไฟล์ Google Sheet ที่อัปเดตคอลัมน์แล้ว</div>
+            <div class="text-xs font-semibold text-emerald-700">ไฟล์ Google Sheet ที่เชื่อมต่อแล้ว</div>
             <div class="font-bold text-emerald-950">บันทึกข้อมูลการเดินทาง กรุงเทพฯ - เชียงราย (19-21 ม.ค. 2570)</div>
           </div>
           <a
@@ -732,18 +793,8 @@
         </div>
 
         <div class="space-y-2">
-          <div class="font-semibold text-slate-800">วิธีเปิดใช้งานรับข้อมูลใน 1 นาที</div>
-          <ol class="list-decimal list-inside space-y-1.5 text-xs sm:text-sm text-slate-600">
-            <li>เปิดไฟล์ Google Sheet ด้านบน แล้วไปที่เมนู <strong>ส่วนขยาย (Extensions) → Apps Script</strong></li>
-            <li>วางโค้ดด้านล่างแทนที่โค้ดเดิมทั้งหมด แล้วกดบันทึก</li>
-            <li>กด <strong>ทำให้ใช้งานได้ (Deploy) → รายการใหม่ (New deployment)</strong> เลือกประเภท <strong>เว็บแอป (Web app)</strong> ตั้งผู้มีสิทธิ์เป็น <strong>ทุกคน (Anyone)</strong></li>
-            <li>คัดลอก <strong>Web app URL</strong> มาวางในช่องด้านบนแล้วกด <strong>บันทึกลิงก์</strong></li>
-          </ol>
-        </div>
-
-        <div class="space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">โค้ด Google Apps Script (Code.gs · 19 คอลัมน์)</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">โค้ด Google Apps Script (Code.gs · 18 คอลัมน์)</span>
             <button
               id="btnCopyGasCode"
               type="button"
@@ -766,7 +817,6 @@
     "'" + (data.phone || ''),
     data.email || '',
     "'" + (data.ropNumber || ''),
-    data.specialMeal || '',
     data.seatAssist || '',
     data.outboundAirport || '',
     data.outboundAirline || '',
@@ -795,7 +845,7 @@
       // =========================================================
       // 1. CONFIGURATION
       // =========================================================
-      const DEFAULT_GAS_WEB_APP_URL = '';
+      const DEFAULT_GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzYSjfV2Bshl9GTI0E0oHES3aTMet_JjPyRv2EoaSsz7K4Z70xcSGmPCgMwwq4cY_8LFg/exec';
       const STORAGE_KEY_RECORDS = 'bkk_cei_travel_records_v3';
       const STORAGE_KEY_GAS_URL = 'bkk_cei_gas_url_2570_v1';
 
@@ -1018,6 +1068,7 @@
       // 4. STATE MANAGEMENT
       // =========================================================
       const state = {
+        currentStep: 1,
         airportFilter: 'ALL',
         selectedOutboundId: null,
         selectedReturnId: null,
@@ -1068,6 +1119,26 @@
       // 5. DOM REFERENCES
       // =========================================================
       const dom = {
+        panels: {
+          1: document.getElementById('stepPanel1'),
+          2: document.getElementById('stepPanel2'),
+          3: document.getElementById('stepPanel3'),
+          4: document.getElementById('stepPanel4')
+        },
+        tabs: {
+          1: document.getElementById('stepTab1'),
+          2: document.getElementById('stepTab2'),
+          3: document.getElementById('stepTab3'),
+          4: document.getElementById('stepTab4')
+        },
+        nums: {
+          1: document.getElementById('stepNum1'),
+          2: document.getElementById('stepNum2'),
+          3: document.getElementById('stepNum3'),
+          4: document.getElementById('stepNum4')
+        },
+        stepSub1: document.getElementById('stepSub1'),
+        stepSub2: document.getElementById('stepSub2'),
         outboundDmkList: document.getElementById('outboundDmkList'),
         outboundBkkList: document.getElementById('outboundBkkList'),
         returnDmkList: document.getElementById('returnDmkList'),
@@ -1076,17 +1147,11 @@
         returnGrid: document.getElementById('returnGrid'),
         outboundSelectedBadge: document.getElementById('outboundSelectedBadge'),
         returnSelectedBadge: document.getElementById('returnSelectedBadge'),
+        step2OutboundRecapText: document.getElementById('step2OutboundRecapText'),
         summaryOutboundBox: document.getElementById('summaryOutboundBox'),
         summaryOutboundContent: document.getElementById('summaryOutboundContent'),
         summaryReturnBox: document.getElementById('summaryReturnBox'),
         summaryReturnContent: document.getElementById('summaryReturnContent'),
-        floatingDock: document.getElementById('floatingDock'),
-        dockOutboundText: document.getElementById('dockOutboundText'),
-        dockReturnText: document.getElementById('dockReturnText'),
-        dockActionBtn: document.getElementById('dockActionBtn'),
-        dockActionLabel: document.getElementById('dockActionLabel'),
-        navStep1: document.getElementById('navStep1'),
-        navStep2: document.getElementById('navStep2'),
         travelForm: document.getElementById('travelForm'),
         selectTravelerPreset: document.getElementById('selectTravelerPreset'),
         btnResetTravelerFields: document.getElementById('btnResetTravelerFields'),
@@ -1100,13 +1165,13 @@
         inputPhone: document.getElementById('inputPhone'),
         inputEmail: document.getElementById('inputEmail'),
         inputRopNumber: document.getElementById('inputRopNumber'),
-        inputSpecialMeal: document.getElementById('inputSpecialMeal'),
         inputSeatAssist: document.getElementById('inputSeatAssist'),
         inputNotes: document.getElementById('inputNotes'),
         formErrorBox: document.getElementById('formErrorBox'),
         btnSubmitTravel: document.getElementById('btnSubmitTravel'),
         btnSubmitLabel: document.getElementById('btnSubmitLabel'),
         btnClearSelection: document.getElementById('btnClearSelection'),
+        btnAddAnotherTraveler: document.getElementById('btnAddAnotherTraveler'),
         headerRegCount: document.getElementById('headerRegCount'),
         sheetStatusDot: document.getElementById('sheetStatusDot'),
         formSyncStatus: document.getElementById('formSyncStatus'),
@@ -1177,9 +1242,56 @@
         return parts[2] + '/' + parts[1] + '/' + parts[0];
       }
 
+      function goToStep(stepNum) {
+        const target = Math.max(1, Math.min(4, Number(stepNum) || 1));
+        state.currentStep = target;
+        renderStepView();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
       // =========================================================
       // 7. RENDERING
       // =========================================================
+      function renderStepView() {
+        const outFlight = findFlight('outbound', state.selectedOutboundId);
+        const retFlight = findFlight('return', state.selectedReturnId);
+
+        [1, 2, 3, 4].forEach(function (step) {
+          const panel = dom.panels[step];
+          const tab = dom.tabs[step];
+          const num = dom.nums[step];
+          const isActive = state.currentStep === step;
+          const isDone = (step === 1 && Boolean(outFlight)) || (step === 2 && Boolean(retFlight));
+
+          panel.classList.toggle('hidden', !isActive);
+
+          if (isActive) {
+            if (step === 3) {
+              tab.className = 'step-tab flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition cursor-pointer bg-gradient-to-r from-[#4E2A84] to-[#6E2D91] text-white shadow-xs';
+              num.className = 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-[#F7DC7B] text-[#3A1966]';
+            } else {
+              tab.className = 'step-tab flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition cursor-pointer bg-slate-900 text-white shadow-xs';
+              num.className = 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-white text-slate-900';
+            }
+          } else if (isDone) {
+            tab.className = 'step-tab flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition cursor-pointer bg-emerald-50/80 text-emerald-900 hover:bg-emerald-100/70';
+            num.className = 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-emerald-600 text-white';
+          } else {
+            tab.className = 'step-tab flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left transition cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-100';
+            num.className = 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-slate-200 text-slate-700';
+          }
+
+          num.textContent = isDone && !isActive ? '✓' : String(step);
+        });
+
+        dom.stepSub1.textContent = outFlight
+          ? (outFlight.airportCode + ' · ' + outFlight.depart + ' น.')
+          : '19 ม.ค. 2570';
+        dom.stepSub2.textContent = retFlight
+          ? (retFlight.airportCode + ' · ' + retFlight.depart + ' น.')
+          : '21 ม.ค. 2570';
+      }
+
       function renderTravelerPresetOptions() {
         const currentVal = dom.selectTravelerPreset.value;
         const opts = ['<option value="">-- เลือกชื่อผู้เดินทาง (หรือกรอกใหม่ด้วยตนเองด้านล่าง) --</option>'];
@@ -1210,7 +1322,7 @@
           ' data-flight-id="' + flight.id + '"' +
           ' data-selected="' + (isSelected ? 'true' : 'false') + '"' +
           ' aria-pressed="' + (isSelected ? 'true' : 'false') + '"' +
-          ' class="flight-card ' + cardTheme + ' w-full text-left rounded-2xl border border-slate-200/80 bg-white p-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40">' +
+          ' class="flight-card ' + cardTheme + ' w-full text-left rounded-2xl border border-slate-200/80 bg-white p-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#532989]/30">' +
             '<div class="flex items-center justify-between gap-2">' +
               '<div class="flex items-center gap-2 flex-wrap">' +
                 '<span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold border ' + flight.badgeClass + '">' +
@@ -1272,7 +1384,7 @@
         document.querySelectorAll('.airport-filter-btn').forEach(function (btn) {
           const val = btn.getAttribute('data-airport-filter');
           const active = val === state.airportFilter;
-          btn.className = 'airport-filter-btn px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition cursor-pointer ';
+          btn.className = 'airport-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer ';
           if (active) {
             if (val === 'DMK') {
               btn.className += 'bg-amber-500 text-white border-amber-500 shadow-xs';
@@ -1299,8 +1411,8 @@
         });
 
         const gridClass = state.airportFilter === 'ALL'
-          ? 'grid grid-cols-1 lg:grid-cols-2 gap-6'
-          : 'grid grid-cols-1 gap-6';
+          ? 'grid grid-cols-1 lg:grid-cols-2 gap-5'
+          : 'grid grid-cols-1 gap-5';
         dom.outboundGrid.className = gridClass;
         dom.returnGrid.className = gridClass;
       }
@@ -1316,17 +1428,21 @@
             (isDmk ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800') + '">' +
             '✓ ' + escapeHtml(outFlight.airline) + ' (' + outFlight.airportCode + ') ' + outFlight.depart + '–' + outFlight.arrive + ' น.</span>';
 
+          dom.step2OutboundRecapText.textContent = outFlight.airline + ' (' + outFlight.airportCode + ') ' + outFlight.depart + ' – ' + outFlight.arrive + ' น.';
+          dom.step2OutboundRecapText.className = 'ml-1 font-semibold text-slate-900';
+
           dom.summaryOutboundBox.className = 'rounded-2xl border p-4 transition ' + (isDmk ? 'border-amber-300 bg-amber-50/60' : 'border-blue-300 bg-blue-50/60');
           dom.summaryOutboundContent.innerHTML =
             '<div class="font-bold text-slate-900">' + escapeHtml(outFlight.airline) + '</div>' +
             '<div class="text-xs sm:text-sm text-slate-600 mt-0.5">' + escapeHtml(outFlight.airportName) + ' → เชียงราย (CEI)</div>' +
             '<div class="text-sm font-semibold text-slate-800 mt-1 tabular-nums">' + outFlight.depart + ' – ' + outFlight.arrive + ' น. (' + escapeHtml(outFlight.duration) + ')</div>';
-          dom.navStep1.textContent = '✓ 1. ขาไป';
         } else {
           dom.outboundSelectedBadge.textContent = 'ยังไม่ได้เลือกเที่ยวบินขาไป';
+          dom.step2OutboundRecapText.textContent = 'ยังไม่ได้เลือก';
+          dom.step2OutboundRecapText.className = 'ml-1 text-slate-400';
+
           dom.summaryOutboundBox.className = 'rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 transition';
-          dom.summaryOutboundContent.innerHTML = '<span class="text-sm text-slate-400">ยังไม่ได้เลือก (แตะเลือกเที่ยวบินด้านบน)</span>';
-          dom.navStep1.textContent = '1. ขาไป';
+          dom.summaryOutboundContent.innerHTML = '<span class="text-sm text-slate-400">ยังไม่ได้เลือก (กด "เปลี่ยน" เพื่อเลือก)</span>';
         }
 
         if (retFlight) {
@@ -1341,34 +1457,13 @@
             '<div class="font-bold text-slate-900">' + escapeHtml(retFlight.airline) + '</div>' +
             '<div class="text-xs sm:text-sm text-slate-600 mt-0.5">เชียงราย (CEI) → ' + escapeHtml(retFlight.airportName) + '</div>' +
             '<div class="text-sm font-semibold text-slate-800 mt-1 tabular-nums">' + retFlight.depart + ' – ' + retFlight.arrive + ' น. (' + escapeHtml(retFlight.duration) + ')</div>';
-          dom.navStep2.textContent = '✓ 2. ขากลับ';
         } else {
           dom.returnSelectedBadge.textContent = 'ยังไม่ได้เลือกเที่ยวบินขากลับ';
           dom.summaryReturnBox.className = 'rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 transition';
-          dom.summaryReturnContent.innerHTML = '<span class="text-sm text-slate-400">ยังไม่ได้เลือก (แตะเลือกเที่ยวบินด้านบน)</span>';
-          dom.navStep2.textContent = '2. ขากลับ';
+          dom.summaryReturnContent.innerHTML = '<span class="text-sm text-slate-400">ยังไม่ได้เลือก (กด "เปลี่ยน" เพื่อเลือก)</span>';
         }
 
-        // Floating Bottom Dock
-        if (outFlight || retFlight) {
-          dom.floatingDock.classList.remove('dock-hidden');
-          dom.dockOutboundText.textContent = outFlight
-            ? (outFlight.airline + ' (' + outFlight.airportCode + ') ' + outFlight.depart + ' น.')
-            : 'ยังไม่เลือก';
-          dom.dockReturnText.textContent = retFlight
-            ? (retFlight.airline + ' (' + retFlight.airportCode + ') ' + retFlight.depart + ' น.')
-            : 'ยังไม่เลือก';
-
-          if (outFlight && !retFlight) {
-            dom.dockActionBtn.setAttribute('href', '#returnSection');
-            dom.dockActionLabel.textContent = 'เลือกขากลับต่อ →';
-          } else {
-            dom.dockActionBtn.setAttribute('href', '#registrationSection');
-            dom.dockActionLabel.textContent = 'ไปกรอกข้อมูล →';
-          }
-        } else {
-          dom.floatingDock.classList.add('dock-hidden');
-        }
+        renderStepView();
       }
 
       function renderSheetStatus() {
@@ -1404,7 +1499,7 @@
         if (records.length === 0) {
           dom.recordsTableBody.innerHTML =
             '<tr><td colspan="8" class="py-10 px-4 text-center text-slate-400 text-sm">' +
-            'ยังไม่มีรายชื่อผู้โดยสาร · เลือกเที่ยวบินและกรอกข้อมูลด้านบนเพื่อบันทึก' +
+            'ยังไม่มีรายชื่อผู้โดยสาร · กดปุ่ม "+ ลงทะเบียนท่านถัดไป" เพื่อเริ่มเลือกเที่ยวบินและบันทึกข้อมูล' +
             '</td></tr>';
           return;
         }
@@ -1438,7 +1533,7 @@
               '</td>' +
               '<td class="py-3.5 px-4 text-xs text-slate-600 tabular-nums">' +
                 '<div>เกิด: ' + escapeHtml(formatDobDisplay(rec.dob)) + '</div>' +
-                (rec.ropNumber ? '<div class="text-indigo-600 font-semibold mt-0.5">ROP: ' + escapeHtml(rec.ropNumber) + '</div>' : '<div class="text-slate-400 mt-0.5">ROP: -</div>') +
+                (rec.ropNumber ? '<div class="text-[#532989] font-semibold mt-0.5">ROP: ' + escapeHtml(rec.ropNumber) + '</div>' : '<div class="text-slate-400 mt-0.5">ROP: -</div>') +
               '</td>' +
               '<td class="py-3.5 px-4">' +
                 (rec.outboundAirline
@@ -1453,7 +1548,6 @@
                   : '<span class="text-xs text-slate-400">-</span>') +
               '</td>' +
               '<td class="py-3.5 px-4 text-xs text-slate-600 max-w-[190px]">' +
-                '<div>อาหาร: ' + escapeHtml(rec.specialMeal || 'ปกติ') + '</div>' +
                 '<div>ที่นั่ง: ' + escapeHtml(rec.seatAssist || 'ไม่ระบุ') + '</div>' +
                 (rec.notes ? '<div class="text-slate-400 mt-0.5">' + escapeHtml(rec.notes) + '</div>' : '') +
               '</td>' +
@@ -1478,6 +1572,40 @@
       // =========================================================
       // 8. EVENT HANDLERS
       // =========================================================
+      // Step navigation delegation (stepper tabs + next/prev/edit buttons)
+      document.querySelector('main').addEventListener('click', function (e) {
+        const stepBtn = e.target.closest('[data-goto-step]');
+        if (stepBtn) {
+          goToStep(stepBtn.getAttribute('data-goto-step'));
+          return;
+        }
+
+        const card = e.target.closest('.flight-card');
+        if (!card) return;
+        const leg = card.getAttribute('data-leg');
+        const flightId = card.getAttribute('data-flight-id');
+        if (leg === 'outbound') {
+          state.selectedOutboundId = (state.selectedOutboundId === flightId) ? null : flightId;
+        } else if (leg === 'return') {
+          state.selectedReturnId = (state.selectedReturnId === flightId) ? null : flightId;
+        }
+        dom.formErrorBox.classList.add('hidden');
+        renderFlightLists();
+        renderSelectionSummary();
+      });
+
+      dom.btnAddAnotherTraveler.addEventListener('click', function () {
+        state.selectedOutboundId = null;
+        state.selectedReturnId = null;
+        dom.travelForm.reset();
+        dom.selectTravelerPreset.value = '';
+        dom.formErrorBox.classList.add('hidden');
+        dom.autofillHint.textContent = 'เลือกชื่อเพื่อเติมข้อมูลพื้นฐานอัตโนมัติ แล้วกรอกช่องที่เหลือเพิ่มเติมได้ตามต้องการ';
+        renderFlightLists();
+        renderSelectionSummary();
+        goToStep(1);
+      });
+
       dom.selectTravelerPreset.addEventListener('change', function () {
         const selectedId = dom.selectTravelerPreset.value;
         dom.formErrorBox.classList.add('hidden');
@@ -1498,11 +1626,10 @@
         dom.inputEmail.value = preset.email || '';
 
         dom.inputRopNumber.value = '';
-        dom.inputSpecialMeal.value = 'ปกติ (Standard)';
         dom.inputSeatAssist.value = 'ไม่ระบุ';
         dom.inputNotes.value = '';
 
-        dom.autofillHint.textContent = 'เติมข้อมูลของ ' + preset.fullNameTh + ' แล้ว · สามารถเพิ่มข้อมูล ROP, อาหารพิเศษ, ที่นั่ง หรือหมายเหตุได้ด้านล่าง';
+        dom.autofillHint.textContent = 'เติมข้อมูลของ ' + preset.fullNameTh + ' แล้ว · สามารถเพิ่มข้อมูล ROP, ที่นั่ง หรือหมายเหตุได้ด้านล่าง';
         showToast('กรอกข้อมูลอัตโนมัติสำหรับ ' + preset.fullNameTh + ' แล้ว', 'success');
       });
 
@@ -1527,21 +1654,6 @@
         });
       });
 
-      document.querySelector('main').addEventListener('click', function (e) {
-        const card = e.target.closest('.flight-card');
-        if (!card) return;
-        const leg = card.getAttribute('data-leg');
-        const flightId = card.getAttribute('data-flight-id');
-        if (leg === 'outbound') {
-          state.selectedOutboundId = (state.selectedOutboundId === flightId) ? null : flightId;
-        } else if (leg === 'return') {
-          state.selectedReturnId = (state.selectedReturnId === flightId) ? null : flightId;
-        }
-        dom.formErrorBox.classList.add('hidden');
-        renderFlightLists();
-        renderSelectionSummary();
-      });
-
       dom.btnClearSelection.addEventListener('click', function () {
         state.selectedOutboundId = null;
         state.selectedReturnId = null;
@@ -1562,7 +1674,6 @@
         const phone = dom.inputPhone.value.trim();
         const email = dom.inputEmail.value.trim();
         const ropNumber = dom.inputRopNumber.value.trim().toUpperCase();
-        const specialMeal = dom.inputSpecialMeal.value;
         const seatAssist = dom.inputSeatAssist.value;
         const notes = dom.inputNotes.value.trim();
 
@@ -1636,7 +1747,6 @@
           phone: phone,
           email: email,
           ropNumber: ropNumber,
-          specialMeal: specialMeal,
           seatAssist: seatAssist,
           outboundAirportCode: outFlight ? outFlight.airportCode : '',
           outboundAirport: outFlight ? outFlight.airportName : '',
@@ -1682,6 +1792,7 @@
         dom.selectTravelerPreset.value = '';
         dom.autofillHint.textContent = 'เลือกชื่อเพื่อเติมข้อมูลพื้นฐานอัตโนมัติ แล้วกรอกช่องที่เหลือเพิ่มเติมได้ตามต้องการ';
         renderRecordsTable();
+        goToStep(4);
       });
 
       dom.recordsTableBody.addEventListener('click', function (e) {
@@ -1730,7 +1841,6 @@
           'เบอร์โทรศัพท์มือถือ',
           'อีเมล (Email)',
           'สมาชิก Royal Orchid Plus (ROP)',
-          'อาหารพิเศษ (Special Meal)',
           'ที่นั่ง / ความช่วยเหลือพิเศษ',
           'สนามบินขาไป (19 ม.ค. 70)',
           'สายการบินขาไป',
@@ -1756,7 +1866,6 @@
             r.phone,
             r.email,
             r.ropNumber,
-            r.specialMeal,
             r.seatAssist,
             r.outboundAirport,
             r.outboundAirline,
